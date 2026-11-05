@@ -1,0 +1,32 @@
+{
+  "description": "Noms de variables, de clés ou de constantes de couleur (FR et EN) vers un rôle v2 de la charte. Sert à `migrer.py --proposer`. Un rôle absent des jetons est ignoré.",
+  "roles": {
+    "fond": ["fond", "background", "bg", "page", "body-bg", "app-bg", "fond-page"],
+    "surface": ["surface", "carte", "card", "panel", "panneau", "bg-card", "fond-carte", "fond-panneau"],
+    "surface-alt": ["surface-alt", "surface-2", "sidebar", "barre-laterale", "bg-alt", "fond-alt", "secondary-background"],
+    "trait": ["trait", "bordure", "border", "line", "ligne", "divider", "separateur", "separator", "outline"],
+    "trait-fort": ["trait-fort", "bordure-champ", "bordure-forte", "input-border", "field-border", "border-strong", "border-input"],
+    "texte": ["texte", "text", "encre", "ink", "foreground", "fg", "text-primary", "texte-principal"],
+    "texte-attenue": ["texte-attenue", "encre-secondaire", "text-secondary", "text-muted", "muted", "subtle", "texte-secondaire", "ink-muted"],
+    "neutre": ["neutre", "neutral", "gris", "gray", "grey"],
+    "primaire": ["primaire", "primary", "brand", "marque"],
+    "primaire-vif": ["primaire-vif", "primary-strong", "primary-hover", "primary-dark", "primaire-fonce", "primaire-survol"],
+    "primaire-doux": ["primaire-doux", "primary-soft", "primary-light", "primary-subtle", "primary-bg", "fond-primaire"],
+    "sur-primaire": ["sur-primaire", "on-primary", "primary-contrast", "primary-foreground", "texte-sur-primaire"],
+    "accent": ["accent", "highlight", "mise-en-avant"],
+    "accent-texte": ["accent-texte", "accent-text"],
+    "accent-doux": ["accent-doux", "accent-soft", "accent-bg", "accent-fond"],
+    "succes": ["succes", "success", "succes-texte", "success-text", "ok", "valid", "valide"],
+    "succes-doux": ["succes-doux", "succes-fond", "success-soft", "success-bg", "success-background"],
+    "alerte": ["alerte", "warning", "warn", "avertissement", "alerte-texte", "warning-text"],
+    "alerte-doux": ["alerte-doux", "alerte-fond", "warning-soft", "warning-bg", "warning-background"],
+    "erreur": ["erreur", "error", "danger", "erreur-texte", "error-text", "danger-text"],
+    "erreur-doux": ["erreur-doux", "erreur-fond", "error-soft", "error-bg", "error-background", "danger-bg"],
+    "focus": ["focus", "ring", "focus-ring", "anneau"],
+    "bouton": ["bouton", "button", "btn", "btn-bg", "bouton-fond"],
+    "sur-bouton": ["sur-bouton", "on-button", "btn-text", "bouton-texte"],
+    "sur-statut": ["sur-statut", "on-status", "on-error", "on-success"],
+    "encre-pleine": ["encre-pleine", "ink-solid", "terminal-bg"],
+    "sur-encre": ["sur-encre", "on-ink", "on-dark"]
+  }
+}

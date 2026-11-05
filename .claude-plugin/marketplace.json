@@ -1,0 +1,14 @@
+{
+  "name": "charte-generique",
+  "owner": {
+    "name": "Anaël Yahi"
+  },
+  "description": "Charte graphique générique, sombre d'abord : jetons, fichiers prêts à l'emploi et contrôles.",
+  "plugins": [
+    {
+      "name": "charte",
+      "source": "./",
+      "description": "Applique la charte générique à un dépôt (init), l'audite (couleurs et polices hors charte) et migre de la v1 vers la v2."
+    }
+  ]
+}
