@@ -132,12 +132,20 @@ Le pictogramme se compose de trois barres. Celle du milieu est plus courte et se
 
 ## Supports
 
-Chaque support a son fichier dans `skills/charte/dist/`, généré depuis les jetons :
-- web : CSS, avec les thèmes clair et sombre et l'attribut `data-theme` ;
-- graphiques : Python, matplotlib et plotly ;
-- Streamlit ;
-- Office : thème `.thmx` ;
-- mermaid ;
-- favicon.
+Chaque support a ses fichiers dans `skills/charte/dist/`, générés par `generer.py` depuis les jetons (`uv run --no-project python -I skills/charte/generer.py`, `--verifier` pour contrôler qu'ils sont à jour) :
+
+- web :
+  - `charte.css` : variables des deux thèmes (sombre par défaut, clair par `prefers-color-scheme` ou `data-theme="clair"`/`"light"`, sombre forcé par `data-theme="sombre"`/`"dark"`), polices, tailles, espacements, rayons ;
+  - `charte-base.css` : styles minimaux d'éléments (corps, titres, liens, focus, code, sélection) ;
+- Python : `charte.py` (`SOMBRE`, `CLAIR`, `POLICES`, `TAILLES`, `ESPACEMENTS`, `RAYONS`, `theme()`) ;
+- graphiques :
+  - matplotlib : `charte-sombre.mplstyle`, `charte-clair.mplstyle` ;
+  - plotly : `plotly-sombre.json`, `plotly-clair.json` (gabarit `layout.template`) ;
+- Streamlit : `streamlit-sombre.toml`, `streamlit-clair.toml` ;
+- mermaid : `mermaid-sombre.json`, `mermaid-clair.json` ;
+- Office : `theme-office.xml` et `charte.thmx` (thème clair, qui imprime bien) ;
+- pictogramme et favicon : `pictogramme.svg` (variables CSS avec repli) et `favicon.svg` (autonome, clair et sombre).
+
+**Exception Streamlit** : Streamlit remplit le bouton principal en `primaryColor`, avec un libellé blanc imposé (Streamlit 1.66 n'a aucune clé de thème pour la couleur de ce libellé). Le thème y met `primaire`, ce qui déroge à la règle « le bleu n'est jamais un aplat de bouton ». Limite connue : ce libellé blanc atteint 6,3:1 sur le primaire clair, mais 2,2:1 seulement sur le primaire sombre, sous le seuil de 4,5:1 ; à mesurer sur capture (story 1.4) avant de choisir un correctif.
 
 Les règles propres à chaque support (impression et niveaux de gris, diapositives, README, image d'aperçu des réseaux sociaux) seront complétées en v2.1, après la mise à l'épreuve par les spécimens.

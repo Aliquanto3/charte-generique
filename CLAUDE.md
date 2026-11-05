@@ -5,6 +5,7 @@ Charte graphique générique, en plugin Claude Code. Sa source unique est `skill
 - **Lint** : `uv run --group dev ruff check .`
 - **Tests** : `uv run --group dev pytest` (ciblés : `uv run --group dev pytest tests/test_x.py`)
 - **Contrôle de la charte** : `uv run --no-project python -I skills/charte/outils/contrastes.py` doit afficher `Échecs : 0`.
+- **Génération** : `uv run --no-project python -I skills/charte/generer.py` régénère `skills/charte/dist/` (commité) ; `--verifier` rend 1 si `dist/` est périmé. À relancer après toute modification des jetons.
 - **Dépendances** :
   - `skills/charte/` : bibliothèque standard seulement, car le plugin tourne sans installation ;
   - spécimens : groupe `specimens` du `pyproject.toml`.

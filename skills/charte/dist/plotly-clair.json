@@ -1,0 +1,67 @@
+{
+  "layout": {
+    "colorway": [
+      "#1D5BC2",
+      "#A87A00",
+      "#1F8155",
+      "#C24D1B",
+      "#B83A75",
+      "#0E7C8C",
+      "#6F7378",
+      "#8A5A2B"
+    ],
+    "paper_bgcolor": "#F6F8FB",
+    "plot_bgcolor": "#FFFFFF",
+    "font": {
+      "family": "'Atkinson Hyperlegible', system-ui, 'Segoe UI', Roboto, sans-serif",
+      "color": "#121821",
+      "size": 14
+    },
+    "title": {
+      "font": {
+        "family": "Sora, system-ui, 'Segoe UI', Roboto, sans-serif",
+        "color": "#121821",
+        "size": 22
+      }
+    },
+    "xaxis": {
+      "gridcolor": "#CED5DF",
+      "linecolor": "#CED5DF",
+      "zerolinecolor": "#CED5DF",
+      "tickfont": {
+        "color": "#4F5A68"
+      },
+      "title": {
+        "font": {
+          "color": "#121821"
+        }
+      }
+    },
+    "yaxis": {
+      "gridcolor": "#CED5DF",
+      "linecolor": "#CED5DF",
+      "zerolinecolor": "#CED5DF",
+      "tickfont": {
+        "color": "#4F5A68"
+      },
+      "title": {
+        "font": {
+          "color": "#121821"
+        }
+      }
+    },
+    "legend": {
+      "font": {
+        "color": "#121821"
+      }
+    },
+    "hoverlabel": {
+      "bgcolor": "#ECF0F5",
+      "bordercolor": "#CED5DF",
+      "font": {
+        "family": "'Atkinson Hyperlegible', system-ui, 'Segoe UI', Roboto, sans-serif",
+        "color": "#121821"
+      }
+    }
+  }
+}
