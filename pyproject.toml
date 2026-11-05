@@ -19,6 +19,7 @@ specimens = [
     "python-pptx>=1.0.2",
     "pywin32>=312 ; sys_platform == 'win32'",
     "streamlit>=1.66.1",
+    "websockets>=17.4",
 ]
 
 [tool.uv]
