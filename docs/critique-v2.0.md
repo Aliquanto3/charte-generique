@@ -101,7 +101,7 @@ Gravité : 3 bloquants, 8 importants, 10 mineurs.
   - une légende graduée, ou la valeur écrite dans chaque cellule ;
   - une cellule isolée dans un pas bas porte une bordure `trait-fort` (A5).
 
-  Une 6ᵉ étape plus foncée en clair a été écartée : la candidate `#144290` est trop proche d'une couleur de la liste locale à éviter (ΔE 14,8), et `primaire-vif` `#164A9E` n'est qu'à ΔE 6,9 de `seq-5`. Une palette divergente reste à faire, sur le même principe : `primaire` d'un côté, le corail (`cat-5` après A1) de l'autre.
+  Une 6ᵉ étape plus foncée en clair a été écartée : la candidate `#144290` est trop proche d'une couleur de la liste locale à éviter, et `primaire-vif` `#164A9E` n'est qu'à ΔE 6,9 de `seq-5`. Une palette divergente reste à faire, sur le même principe : `primaire` d'un côté, le corail (`cat-5` après A1) de l'autre.
 
 **I5. La règle « au-delà de quatre séries » n'est appliquée par aucun gabarit.**
 - Supports :
