@@ -251,3 +251,34 @@ def test_cles_toml_et_constantes_python(tmp_path):
     e = {x["ancien"]: x for x in plan(d, proposer=True)}
     assert e["#F2F2F2"]["role"] == "fond" and e["#FDFDFD"]["role"] == "surface"
     assert e["#A090D0"]["statut"] == "revoir"
+
+
+def test_classe_dark_header_ni_fichier_darkroom_ne_basculent_le_theme(tmp_path):
+    p = V1["roles"]["primaire"]
+    d = depot(tmp_path, {"a.css": f".dark-header {{ --color-primary: {p['clair']}; }}\n.light-x {{ --color-primary: {p['sombre']}; }}\n",
+                         "darkroom.css": f":root {{ --color-primary: {p['clair']}; }}\n",
+                         "highlight.css": f":root {{ --color-primary: {p['sombre']}; }}\n"})
+    par = {(e["fichier"], e["ancien"]): e["nouveau"] for e in plan(d)}
+    assert par[("a.css", p["clair"])] == v2("clair", "primaire")
+    assert par[("a.css", p["sombre"])] == v2("sombre", "primaire")
+    assert par[("darkroom.css", p["clair"])] == v2("clair", "primaire")
+    assert par[("highlight.css", p["sombre"])] == v2("sombre", "primaire")
+    assert migrer.theme_nom("theme-dark.css") == "sombre" and migrer.theme_nom("darkTheme.ts") == "sombre"
+    assert migrer.theme_nom("highlight.toml") is None
+
+
+def test_plan_dans_le_depot_n_est_pas_un_theme_sombre(tmp_path):
+    d = depot(tmp_path, {"a.css": MAISON})
+    lancer(d, "--proposer", "--plan", str(d / "plan.md"))
+    assert "prefers-color-scheme: dark" in lire(d, "plan.md")
+    res = migrer.planifier(d, [], migrer.Contexte(None, True))
+    assert not res["sombre_present"] and res["blocs"]
+    lancer(d, "--proposer", "--plan", str(d / "plan.md"))
+    assert "Aucun thème sombre détecté" in lire(d, "plan.md")
+
+
+def test_encodage_cp1252_conserve_a_l_ecriture(tmp_path):
+    p = V1["roles"]["primaire"]["clair"]
+    (tmp_path / "a.css").write_bytes(f"/* thème */ :root {{ --color-primary: {p}; }}\n".encode("cp1252"))
+    lancer(tmp_path, "--appliquer")
+    assert (tmp_path / "a.css").read_bytes().decode("cp1252") == f"/* thème */ :root {{ --color-primary: {v2('clair', 'primaire')}; }}\n"

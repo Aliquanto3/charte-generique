@@ -27,8 +27,11 @@ import audit  # noqa: E402
 from couleurs import de00  # noqa: E402
 from jetons import THEMES, charger  # noqa: E402
 
-DARK = re.compile(r"prefers-color-scheme\s*:\s*dark|data-(?:theme|mode|bs-theme)\s*=\s*[\"']?(?:dark|sombre)|\.(?:dark|sombre|theme-dark)\b", re.IGNORECASE)
-LIGHT = re.compile(r"prefers-color-scheme\s*:\s*light|data-(?:theme|mode|bs-theme)\s*=\s*[\"']?(?:light|clair)|\.(?:light|clair|theme-light)\b", re.IGNORECASE)
+# Mot entier : `.dark-header` ou `.light-box` ne désignent pas un thème.
+DARK = re.compile(r"prefers-color-scheme\s*:\s*dark|data-(?:theme|mode|bs-theme)\s*=\s*[\"']?(?:dark|sombre)(?![\w-])"
+                  r"|\.(?:dark|sombre|theme-dark)(?![\w-])", re.IGNORECASE)
+LIGHT = re.compile(r"prefers-color-scheme\s*:\s*light|data-(?:theme|mode|bs-theme)\s*=\s*[\"']?(?:light|clair)(?![\w-])"
+                   r"|\.(?:light|clair|theme-light)(?![\w-])", re.IGNORECASE)
 SECTION = re.compile(r"^\s*\[([^\]]+)\]", re.MULTILINE)
 STYLES = {".css", ".scss", ".html", ".htm", ".svg"}
 DECLARATIONS = {".toml", ".json", ".yaml", ".yml", ".py"}
@@ -76,15 +79,21 @@ class Suivi:
 
 
 def theme_nom(texte: str) -> str | None:
-    t = texte.lower()
-    if "dark" in t or "sombre" in t:
+    """Thème d'un nom de fichier ou de section, par mot entier (`theme-dark.css`, `darkTheme`, `[theme.sombre]`).
+
+    Une sous-chaîne ne suffit pas : `darkroom.css` ou `highlight.toml` ne désignent aucun thème.
+    """
+    mots = {m.lower() for m in re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])", texte)}
+    if mots & {"dark", "sombre"}:
         return "sombre"
-    if "light" in t or "clair" in t:
+    if mots & {"light", "clair"}:
         return "clair"
     return None
 
 
 def a_sombre(rel: Path, texte: str) -> bool:
+    if rel.suffix.lower() == ".md":  # un plan ou une doc qui cite `prefers-color-scheme: dark` n'est pas un thème
+        return False
     return (theme_nom(rel.name) == "sombre" or bool(DARK.search(texte))
             or any(theme_nom(s) == "sombre" for s in SECTION.findall(texte)))
 
@@ -179,7 +188,9 @@ def plus_proche(ctx: Contexte, h: str, theme: str | None) -> tuple[float, str, s
 
 
 def planifier(depot: Path, ignorer: list[str], ctx: Contexte) -> dict:
-    fichiers = audit.lire_fichiers(depot, ignorer)
+    encodages: dict[Path, str] = {}
+    avertissements: list[str] = []
+    fichiers = audit.lire_fichiers(depot, ignorer, encodages, avertissements)
     textes = {rel: t for rel, t in fichiers}
     entrees: list[dict] = []
     edits: dict[Path, list[tuple[int, int, int, str, bool]]] = {}
@@ -285,7 +296,8 @@ def planifier(depot: Path, ignorer: list[str], ctx: Contexte) -> dict:
     bloc = {}
     if not sombre_present:
         bloc = blocs_sombres(ctx, entrees)
-    return {"entrees": entrees, "edits": edits, "textes": textes, "sombre_present": sombre_present, "blocs": bloc}
+    return {"entrees": entrees, "edits": edits, "textes": textes, "sombre_present": sombre_present, "blocs": bloc,
+            "encodages": encodages, "avertissements": avertissements}
 
 
 def blocs_sombres(ctx: Contexte, entrees: list[dict]) -> dict[str, str]:
@@ -316,6 +328,8 @@ def rendre_plan(res: dict, ctx: Contexte) -> str:
     for x in e:
         out.append(f"| `{x['fichier']}` | {x['ligne']} | `{x['ancien']}` | `{x['nouveau']}` | {x['role']} | {x['statut']} | {x['note']} |")
     out += ["", f"Résumé : {auto} remplacement(s) automatique(s), {revoir} à revoir à la main."]
+    if res.get("avertissements"):
+        out += ["", "## Avertissements", ""] + [f"- {a}" for a in res["avertissements"]]
     if res["blocs"]:
         out += ["", "## Thème sombre", "",
                 "Aucun thème sombre détecté dans le dépôt. Bloc proposé (écrit seulement avec `--appliquer --ajouter-sombre`) :"]
@@ -341,7 +355,7 @@ def appliquer(depot: Path, res: dict, ajouter_sombre: bool) -> int:
         if ajouter_sombre and rel.as_posix() in res["blocs"]:
             texte += ("" if texte.endswith("\n") else "\n") + res["blocs"][rel.as_posix()]
         if texte != res["textes"][rel]:
-            (depot / rel).write_bytes(texte.encode("utf-8"))
+            (depot / rel).write_bytes(texte.encode(res.get("encodages", {}).get(rel, "utf-8")))
             modifies += 1
     return modifies
 
@@ -361,7 +375,12 @@ def main(argv: list[str] | None = None) -> int:
     corr = json.loads(a.correspondances.read_text(encoding="utf-8")) if a.correspondances else None
     ctx = Contexte(corr, a.proposer)
     depot = a.depot.resolve()
-    res = planifier(depot, a.ignorer, ctx)
+    ignorer = list(a.ignorer)
+    if a.plan:
+        a.plan = a.plan.resolve()
+        if a.plan.is_relative_to(depot):  # le plan d'une passe précédente ne fait pas partie du dépôt à migrer
+            ignorer.append(a.plan.relative_to(depot).as_posix())
+    res = planifier(depot, ignorer, ctx)
     plan = rendre_plan(res, ctx)
     if a.plan:
         a.plan.write_text(plan, encoding="utf-8")

@@ -41,7 +41,7 @@ uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/migrer
 Déroulé en quatre temps :
 
 1. **Constater.** Lance `audit` (ci-dessus) pour mesurer l'écart.
-2. **Proposer et relire.** Lance `migrer --proposer --plan plan.md` (sans `--appliquer` : le plan seul n'écrit rien dans le dépôt). Relis le plan avec l'utilisateur :
+2. **Proposer et relire.** Lance `migrer --proposer --plan <hors-du-dépôt>/plan.md` (sans `--appliquer` : le plan seul n'écrit rien dans le dépôt). Écris le plan et `corr.json` hors du dépôt cible, pour ne pas les commiter. Relis le plan avec l'utilisateur, avertissements compris (fichier lu en cp1252, encodage illisible) :
    - `auto` : remplacement sûr (valeur v1 sans ambiguïté, ou nom de variable qui correspond exactement à un rôle) ;
    - `revoir` : à décider à la main (rôle qui change de sens, valeur partagée par deux rôles, proposition au jeton le plus proche).
 3. **Décider puis appliquer.** Écris `corr.json`, une table `{"--nom-de-variable": "role-v2"}` (`null` supprime une variable ; si elle est encore utilisée, elle est signalée et conservée). Lance `migrer --proposer --correspondances corr.json --appliquer`. Ajoute `--ajouter-sombre` si le plan signale qu'il n'y a pas de thème sombre : le bloc `[data-theme="dark"]` et `prefers-color-scheme: dark` est alors généré depuis les jetons sombres.

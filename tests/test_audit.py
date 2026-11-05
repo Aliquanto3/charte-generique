@@ -101,3 +101,43 @@ def test_markdown(tmp_path, capsys):
     audit.main([str(d), "--markdown"])
     sortie = capsys.readouterr().out
     assert "| Classe | Fichier |" in sortie and "| hors-charte | `a.css` | 1 | `#00FF00` |" in sortie
+
+
+def test_raccourci_font_reconnu():
+    assert [n for n, _, _ in audit.polices_ligne("h1 { font: italic 700 2rem/1.2 Fredoka, sans-serif; }")] == ["Fredoka"]
+    assert audit.polices_ligne("p { font: inherit; }") == []
+
+
+def test_fichiers_non_suivis_lus_dans_un_depot_git(tmp_path):
+    import subprocess
+    d = depot(tmp_path, {"suivi.css": "a { color: #123456; }\n"})
+    subprocess.run(["git", "init", "-q", str(d)], check=True)
+    subprocess.run(["git", "-C", str(d), "add", "suivi.css"], check=True)
+    (d / "neuf.css").write_text("a { color: #654321; }\n", encoding="utf-8")
+    (d / ".gitignore").write_text("ignore.css\n", encoding="utf-8")
+    (d / "ignore.css").write_text("a { color: #222222; }\n", encoding="utf-8")
+    fichiers = {r.as_posix() for r, _ in audit.lire_fichiers(d)}
+    assert {"suivi.css", "neuf.css"} <= fichiers and "ignore.css" not in fichiers
+
+
+def test_cp1252_lu_et_signale_bom_retire(tmp_path):
+    (tmp_path / "a.css").write_bytes("/* thème */ a { color: #123456; }\n".encode("cp1252"))
+    (tmp_path / "t.toml").write_bytes(b"\xef\xbb\xbf[theme]\nprimaryColor = \"#123456\"\n")
+    enc, avert = {}, []
+    textes = dict(audit.lire_fichiers(tmp_path, None, enc, avert))
+    assert enc == {audit.Path("a.css"): "cp1252", audit.Path("t.toml"): "utf-8-sig"}
+    assert textes[audit.Path("t.toml")].startswith("[theme]")
+    res = audit.auditer(tmp_path)
+    assert res["avertissements"] == ["a.css : pas en UTF-8, lu en cp1252"]
+    assert "Avertissement : a.css" in audit.texte(res, False)
+
+
+def test_selecteurs_js_ignores():
+    assert audit.couleurs_ligne('document.querySelector("#add").hidden = true;', ".js") == []
+    assert audit.couleurs_ligne("$('#bed').show();", ".js") == []
+    assert [c["hex"] for c in audit.couleurs_ligne('const c = "#add";', ".js")] == ["#AADDDD"]
+
+
+def test_hsl_negatif_ne_plante_pas():
+    assert audit._fonction("hsl", "-10 -20% 150%") == ("#FFFFFF", "")
+    assert audit._fonction("hsl", "200 -50% 50%") == ("#808080", "")

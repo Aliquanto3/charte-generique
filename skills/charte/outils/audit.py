@@ -41,8 +41,13 @@ FONCTION = re.compile(r"(?<![\w.-])(rgba?|hsla?)\(([^()]*)\)", re.IGNORECASE)
 PROPRIETE = re.compile(
     r"(?:[\w-]*color|fill|stroke|background|border[\w-]*|outline[\w-]*|box-shadow|text-shadow|bgcolor)\s*[=:]\s*[\"']?[^\"';{}#]*$",
     re.IGNORECASE)
-NON_COULEUR = re.compile(r"(?:href|src|id|for|aria-[\w-]+|data-[\w-]+|url\()\s*[=:]?\s*[\"']?$", re.IGNORECASE)
+NON_COULEUR = re.compile(r"(?:href|src|id|for|aria-[\w-]+|data-[\w-]+|url\()\s*[=:]?\s*[\"']?$"
+                         r"|(?:querySelector(?:All)?|getElementById|closest|matches|\$)\(\s*[\"'`]$", re.IGNORECASE)
 POLICE = re.compile(r"(?<![\w.-])(?:font-family[\"']?\s*:|fontfamily\s*[=:]|font\.family\s*[=:]|font\s*=)\s*([^;{}\n]*)", re.IGNORECASE)
+# Raccourci CSS `font: [style] [graisse] <taille>[/<interligne>] <familles>` : les familles suivent la taille.
+POLICE_RACCOURCI = re.compile(
+    r"(?<![\w.-])font\s*:\s*(?:[^;{}\n]*?\s)?(?:\d*\.?\d+(?:px|r?em|pt|pc|%|vh|vw|vmin|vmax|ex|ch|lh)|(?:xx?-)?(?:small|large)|medium|smaller|larger)"
+    r"(?:\s*/\s*[\w.%-]+)?\s+([^;{}\n]*)", re.IGNORECASE)
 PAS_UNE_POLICE = {"inherit", "initial", "unset", "sans serif", "sans-serif", "serif", "monospace"}
 
 
@@ -83,8 +88,9 @@ def _ignore(rel: Path, motifs: list[str]) -> bool:
 
 def lister(depot: Path) -> list[Path]:
     try:
-        r = subprocess.run(["git", "-C", str(depot), "ls-files", "-z"], capture_output=True, check=True)
-        noms = [n for n in r.stdout.decode("utf-8", "replace").split("\0") if n]
+        r = subprocess.run(["git", "-C", str(depot), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+                           capture_output=True, check=True)
+        noms = {n for n in r.stdout.decode("utf-8", "replace").split("\0") if n}
         if noms:
             return [Path(n) for n in noms]
     except (OSError, subprocess.CalledProcessError):
@@ -92,8 +98,13 @@ def lister(depot: Path) -> list[Path]:
     return [p.relative_to(depot) for p in depot.rglob("*") if p.is_file() and ".git" not in p.relative_to(depot).parts]
 
 
-def lire_fichiers(depot: Path, ignorer: list[str] | None = None) -> list[tuple[Path, str]]:
-    """(chemin relatif, texte) des fichiers texte utiles : ni binaire, ni > 1 Mo, ni ignoré."""
+def lire_fichiers(depot: Path, ignorer: list[str] | None = None, encodages: dict | None = None,
+                  avertissements: list[str] | None = None) -> list[tuple[Path, str]]:
+    """(chemin relatif, texte) des fichiers texte utiles : ni binaire, ni > 1 Mo, ni ignoré.
+
+    Décodage UTF-8 (BOM retiré), sinon cp1252. L'encodage retenu va dans `encodages`, pour réécrire à l'identique.
+    Un fichier lu en repli, ou illisible, est signalé dans `avertissements`, jamais ignoré en silence.
+    """
     motifs = IGNORES_DEFAUT + list(ignorer or [])
     out = []
     for rel in sorted(lister(depot)):
@@ -105,10 +116,22 @@ def lire_fichiers(depot: Path, ignorer: list[str] | None = None) -> list[tuple[P
         brut = p.read_bytes()
         if b"\0" in brut[:8192]:
             continue
+        enc = "utf-8-sig" if brut.startswith(b"\xef\xbb\xbf") else "utf-8"
         try:
-            out.append((rel, brut.decode("utf-8")))
+            texte = brut.decode(enc)
         except UnicodeDecodeError:
-            continue
+            enc = "cp1252"
+            try:
+                texte = brut.decode(enc)
+            except UnicodeDecodeError:
+                if avertissements is not None:
+                    avertissements.append(f"{rel.as_posix()} : encodage illisible, fichier ignoré")
+                continue
+            if avertissements is not None:
+                avertissements.append(f"{rel.as_posix()} : pas en UTF-8, lu en cp1252")
+        if encodages is not None:
+            encodages[rel] = enc
+        out.append((rel, texte))
     return out
 
 
@@ -150,7 +173,8 @@ def _fonction(nom: str, args: str) -> tuple[str, str] | None:
         h, s, ln = _nombre(jetons[0]), _nombre(jetons[1], 0.01), _nombre(jetons[2], 0.01)
         if h is None or s is None or ln is None:
             return None
-        r, g, b = (round(x * 255) for x in colorsys.hls_to_rgb((h % 360) / 360, min(ln, 1), min(s, 1)))
+        rgb = colorsys.hls_to_rgb((h % 360) / 360, max(0.0, min(ln, 1.0)), max(0.0, min(s, 1.0)))
+        r, g, b = (max(0, min(255, round(x * 255))) for x in rgb)
     hexa = f"#{r:02X}{g:02X}{b:02X}"
     return hexa, (f"rgba({r}, {g}, {b}, {alpha:g})" if alpha < 1 else "")
 
@@ -185,7 +209,7 @@ def couleurs_ligne(ligne: str, ext: str) -> list[dict]:
 def polices_ligne(ligne: str) -> list[tuple[str, int, int]]:
     """Familles déclarées sur une ligne : (nom, début, fin)."""
     out = []
-    for m in POLICE.finditer(ligne):
+    for m in [*POLICE.finditer(ligne), *POLICE_RACCOURCI.finditer(ligne)]:
         base, valeur = m.start(1), m.group(1)
         pos = 0
         for item in valeur.split(","):
@@ -236,8 +260,9 @@ def auditer(depot: Path, ignorer: list[str] | None = None) -> dict:
     jetons, v1 = charger(), charger_v1()
     pal, v1val = palette(jetons), valeurs_v1(v1)
     familles = {f for r in jetons["police"].values() for f in r["familles"]}
-    constats = []
-    for rel, texte in lire_fichiers(depot, ignorer):
+    constats: list[dict] = []
+    avertissements: list[str] = []
+    for rel, texte in lire_fichiers(depot, ignorer, avertissements=avertissements):
         ext = rel.suffix.lower()
         for n, ligne in enumerate(texte.splitlines(), 1):
             for c in couleurs_ligne(ligne, ext):
@@ -249,7 +274,7 @@ def auditer(depot: Path, ignorer: list[str] | None = None) -> dict:
     resume = {"couleurs": {k: 0 for k in ("charte", "proche", "v1", "hors-charte")}, "polices": {"v1": 0, "hors-charte": 0}}
     for k in constats:
         resume["couleurs" if k["type"] == "couleur" else "polices"][k["classe"]] += 1
-    return {"depot": str(depot), "constats": constats, "resume": resume}
+    return {"depot": str(depot), "constats": constats, "resume": resume, "avertissements": avertissements}
 
 
 def _detail(k: dict) -> str:
@@ -274,7 +299,8 @@ def texte(res: dict, markdown: bool) -> str:
     c, p = r["couleurs"], r["polices"]
     resume = (f"Couleurs : {c['charte']} charte, {c['proche']} proche, {c['v1']} v1, {c['hors-charte']} hors-charte. "
               f"Polices : {p['v1']} v1, {p['hors-charte']} hors-charte.")
-    return "\n".join(sortie + ["", ("**" + resume + "**") if markdown else resume])
+    avert = [("- " if markdown else "Avertissement : ") + a for a in res.get("avertissements", [])]
+    return "\n".join(sortie + ["", ("**" + resume + "**") if markdown else resume] + ([""] + avert if avert else []))
 
 
 def main(argv: list[str] | None = None) -> int:
