@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # `-I` ne met pas le dossier du script dans sys.path
 
-from couleurs import MACHADO, de00, simule  # noqa: E402
+from couleurs import MACHADO, de00, ecart_minimal, simule  # noqa: E402
 from jetons import THEMES, charger  # noqa: E402
 
 VISIONS = ("normale", *MACHADO)
@@ -36,7 +36,8 @@ def analyser(jetons: dict, seuil: float = SEUIL_DEFAUT) -> tuple[list[dict], lis
         cats = [jetons[theme][f"cat-{n}"] for n in range(1, 9)]
         for vision in VISIONS:
             p = paires(cats, vision)
-            pire8, pire4 = p[0], next(x for x in p if x[2] <= 4)
+            sim = None if vision == "normale" else vision
+            pire8, pire4 = ecart_minimal(cats, sim), ecart_minimal(cats[:4], sim)
             res.append({"theme": theme, "vision": vision, "paires": p, "pire8": pire8, "pire4": pire4})
             for d, i, j in p:
                 if j <= 4 and d < seuil:

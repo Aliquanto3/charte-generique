@@ -14,6 +14,16 @@ def test_aucune_couleur_en_dur_hors_jetons():
         assert {c.upper() for c in trouvees} <= autorisees, f.name
 
 
+def test_aucune_couleur_en_dur_autre_forme():
+    # #RGB, #RRGGBBAA, rgb()/rgba()/hsl() et noms de couleurs passés en argument `color`/`fill`
+    motifs = (r"[\"']#[0-9A-Fa-f]{3,4}[\"']", r"#[0-9A-Fa-f]{8}\b", r"\b(?:rgba?|hsla?)\(",
+              r"\b(?:color|fill|facecolor|edgecolors?)\s*=\s*[\"'][a-z]+[\"']")
+    for f in DOSSIER.glob("*.py"):
+        src = f.read_text(encoding="utf-8")
+        for m in motifs:
+            assert not re.search(m, src), (f.name, m)
+
+
 def test_scripts_et_rendus_presents():
     assert (DOSSIER / "rendre.py").exists() and (DOSSIER / "streamlit_demo.py").exists()
     assert (DOSSIER / "LISEZMOI.md").exists()

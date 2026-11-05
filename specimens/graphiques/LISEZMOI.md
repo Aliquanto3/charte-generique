@@ -9,7 +9,11 @@ uv run --group specimens python -I specimens/graphiques/rendre.py [--sans-plotly
 uv run --no-project python -I skills/charte/outils/daltonisme.py [--markdown] [--seuil 4.0]
 ```
 
-Prérequis du rendu : Chrome (kaleido 1.x, via `BROWSER_PATH`) et Edge ou Chrome (capture Streamlit par DevTools). Le script de capture utilise `websockets`, présent via Streamlit mais non déclaré dans `pyproject.toml`. 29 PNG, 1,45 Mo.
+Prérequis du rendu : Chrome (kaleido 1.x, via `BROWSER_PATH`) et Edge ou Chrome (capture Streamlit par DevTools). Le script de capture utilise `websockets`, présent via Streamlit mais non déclaré dans `pyproject.toml`.
+
+**À l'attention de l'orchestrateur** : ajouter `websockets` au groupe `specimens` de `pyproject.toml` (dépendance directe de `rendre.py`, aujourd'hui seulement transitive de Streamlit ; fichier interdit à la story).
+
+ 29 PNG, 1,45 Mo.
 
 ## Fichiers
 
@@ -56,4 +60,5 @@ Thème sombre : séries 1 à 4 au minimum 5,9 ; la faiblesse est dans les série
 - **Lignes à 8 séries** : les étiquettes directes de fin de courbe se chevauchent (vérifié en clair : séries 4, 5 et 6, 7 ; mêmes données en sombre) ; la légende directe ne suffit pas sans anti-chevauchement.
 - **Thème clair, 8 séries** : en simulation, `cat-4`/`cat-8` (protanopie 4,1) sont proches (bruns) ; `cat-1` devient vert-bleu en tritanopie.
 - **Polices** : Atkinson, Sora et JetBrains Mono ne sont pas installées sur le poste. Matplotlib les charge par `addfont` ; le `mplstyle` cite aussi `Segoe UI` et `Roboto` en repli, d'où des avertissements `findfont` pour `Roboto` (absente). Plotly et Streamlit rendent en repli (`system-ui`/Segoe UI) : les captures ne montrent donc pas Atkinson ni Sora.
+- **Couleurs Streamlit hors jetons** (mesure sur `streamlit-sombre.png`) : `st.success` rend un fond `#183A29` et un texte `#5CE488` (7,70:1), et le code en ligne un texte `#5CE488` sur `#161C22` ; aucune de ces valeurs n'est un jeton (`succes` sombre vaut `#8CC7A0`). Limite du thème Streamlit : `dist/streamlit-sombre.toml` ne fixe pas ces couleurs ; vérifier si Streamlit 1.66 offre des clés de thème pour les couleurs sémantiques et le code (à traiter dans le générateur, pas dans la story).
 - **Streamlit** : l'en-tête (`Deploy`, menu) n'est pas thémé par la charte ; la capture est prise en 1100 × 900. `st.bar_chart` utilise `chartCategoricalColors` et empile les barres.
