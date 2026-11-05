@@ -9,8 +9,17 @@ dependencies = []
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]
-# Bibliothèques des spécimens (stories 2 à 5) : ajoutées par les stories qui en ont besoin.
-specimens = []
+# Bibliothèques des spécimens (rendus locaux, hors CI). Ne pas modifier dans une story de spécimen : demander à l orchestrateur.
+specimens = [
+    "kaleido>=1.5.0",
+    "matplotlib>=3.11.2",
+    "pillow>=13.0.0",
+    "plotly>=7.1.0",
+    "python-docx>=1.2.0",
+    "python-pptx>=1.0.2",
+    "pywin32>=312 ; sys_platform == 'win32'",
+    "streamlit>=1.66.1",
+]
 
 [tool.uv]
 package = false
