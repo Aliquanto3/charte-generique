@@ -15,7 +15,7 @@ RACINE = Path(__file__).resolve().parents[2]
 CHARTE = RACINE / "skills" / "charte"
 sys.path.insert(0, str(CHARTE / "outils"))
 
-from contrastes import PAIRES, PASTILLES, TAUX_PASTILLE  # noqa: E402
+from contrastes import PAIRES, PASTILLES, SEUIL_SERIES, TAUX_PASTILLE  # noqa: E402
 from couleurs import contraste, ecart_minimal, melange  # noqa: E402
 from jetons import charger  # noqa: E402
 
@@ -322,7 +322,7 @@ def rapport(chemin: Path, png: Path) -> None:
     lignes = [("Mesure (calculée depuis les jetons)", "Clair", "Sombre", "Seuil"),
               ("Contraste minimal du texte", virgule(mc["texte"]) + ":1", virgule(ms["texte"]) + ":1", "4,5:1"),
               ("Contraste minimal non textuel", virgule(mc["non-texte"]) + ":1", virgule(ms["non-texte"]) + ":1", "3:1"),
-              ("Écart minimal entre séries (ΔE00)", virgule(mc["series"], 1), virgule(ms["series"], 1), "10")]
+              ("Écart minimal entre séries (ΔE00)", virgule(mc["series"], 1), virgule(ms["series"], 1), f"{SEUIL_SERIES:g}")]
     t = d.add_table(rows=len(lignes), cols=4)
     for ri, ligne in enumerate(lignes):
         for ci, val in enumerate(ligne):

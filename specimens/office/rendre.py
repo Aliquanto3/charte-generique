@@ -17,10 +17,16 @@ LARGEUR = 1600
 
 
 def _en_cours(image: str) -> bool:
+    """Vrai si le processus tourne. En cas de doute (tasklist absent, erreur), vrai : on ne ferme alors rien."""
     import subprocess
 
-    sortie = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {image}", "/NH"], capture_output=True, text=True, errors="replace").stdout
-    return image.lower() in sortie.lower()
+    try:
+        r = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {image}", "/NH"], capture_output=True, text=True, errors="replace", timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return True
+    if r.returncode != 0:
+        return True
+    return image.lower() in r.stdout.lower()
 
 
 def _fermer(objet, *args) -> None:
@@ -29,6 +35,13 @@ def _fermer(objet, *args) -> None:
         objet(*args)
     except Exception as e:  # noqa: BLE001
         print("Fermeture COM en échec :", e)
+
+
+def _vide(app) -> bool:
+    try:
+        return app.Presentations.Count == 0
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def deck() -> None:
@@ -48,7 +61,8 @@ def deck() -> None:
     finally:
         if pres is not None:
             _fermer(pres.Close)
-        if not deja_ouvert:
+        # l'utilisateur a pu ouvrir une présentation pendant le rendu : on ne ferme que si l'application est vide
+        if not deja_ouvert and _vide(app):
             _fermer(app.Quit)
 
 

@@ -118,3 +118,22 @@ def test_rapport_styles_et_pied(paquets):
     assert len(d.tables) == 2  # tableau de données et encadré d'alerte
     assert "version" in d.sections[0].footer.paragraphs[0].text
     assert len(d.inline_shapes) == 1
+
+
+def test_rendre_en_cours_sur_du_doute_ne_ferme_rien(monkeypatch):
+    """Si tasklist est absent ou échoue, l'application est réputée ouverte (donc jamais fermée)."""
+    import subprocess
+    import sys
+
+    sys.path.insert(0, str(RACINE / "specimens" / "office"))
+    import rendre
+
+    def absent(*a, **k):
+        raise FileNotFoundError("tasklist")
+
+    monkeypatch.setattr(subprocess, "run", absent)
+    assert rendre._en_cours("POWERPNT.EXE") is True
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="INFO: aucune tâche", stderr=""))
+    assert rendre._en_cours("POWERPNT.EXE") is False
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="POWERPNT.EXE  1234", stderr=""))
+    assert rendre._en_cours("POWERPNT.EXE") is True
