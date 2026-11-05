@@ -2,7 +2,8 @@
 
     uv run --group specimens python specimens/office/rendre.py
 
-Les applications sont lancées en instance propre, sans alerte, et toujours fermées (`Quit`) dans un `finally`.
+Word est lancé en instance propre (`DispatchEx`) et toujours fermé. PowerPoint n'a qu'une instance par session :
+si l'utilisateur l'a déjà ouvert, on ne ferme que notre présentation, jamais son application.
 """
 from __future__ import annotations
 
@@ -15,11 +16,27 @@ RENDUS = ICI / "rendus"
 LARGEUR = 1600
 
 
+def _en_cours(image: str) -> bool:
+    import subprocess
+
+    sortie = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {image}", "/NH"], capture_output=True, text=True, errors="replace").stdout
+    return image.lower() in sortie.lower()
+
+
+def _fermer(objet, *args) -> None:
+    """Ferme sans laisser une erreur empêcher la fermeture suivante."""
+    try:
+        objet(*args)
+    except Exception as e:  # noqa: BLE001
+        print("Fermeture COM en échec :", e)
+
+
 def deck() -> None:
     import pythoncom
     import win32com.client as wc
 
     pythoncom.CoInitialize()
+    deja_ouvert = _en_cours("POWERPNT.EXE")
     app = wc.DispatchEx("PowerPoint.Application")
     pres = None
     try:
@@ -30,8 +47,9 @@ def deck() -> None:
             pres.Slides(i).Export(str(RENDUS / f"deck-{i}.png"), "PNG", LARGEUR, LARGEUR * 9 // 16)
     finally:
         if pres is not None:
-            pres.Close()
-        app.Quit()
+            _fermer(pres.Close)
+        if not deja_ouvert:
+            _fermer(app.Quit)
 
 
 def rapport() -> None:
@@ -56,8 +74,8 @@ def rapport() -> None:
         img.convert("RGB").resize((LARGEUR, h), Image.LANCZOS).save(RENDUS / "rapport-1.png")
     finally:
         if doc is not None:
-            doc.Close(False)
-        app.Quit()
+            _fermer(doc.Close, False)
+        _fermer(app.Quit)
 
 
 if __name__ == "__main__":
