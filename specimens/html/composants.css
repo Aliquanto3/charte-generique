@@ -8,6 +8,7 @@
 .page { max-width: 960px; margin: 0 auto; padding: var(--espacement-6) var(--espacement-5); }
 .entete { display: flex; align-items: center; justify-content: space-between; gap: var(--espacement-4); padding-bottom: var(--espacement-4); border-bottom: var(--trait-largeur) solid var(--trait); }
 .logotype { display: flex; align-items: center; gap: var(--espacement-2); font-family: var(--police-titres); font-weight: var(--graisse-titres); font-size: var(--taille-grand); color: var(--texte); }
+.logotype .nom { font: inherit; margin: 0; color: inherit; }
 .section { margin-top: var(--espacement-7); break-inside: avoid-page; }
 .section > h2 { font-size: var(--taille-titre-3); margin: 0 0 var(--espacement-4); }
 .legende { font-size: var(--taille-legende); color: var(--texte-attenue); }
@@ -94,7 +95,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   body { background: none; color: var(--texte); }
   .page { max-width: none; padding: 0; }
   .selecteur { display: none; }
-  .carte, .modale, .echantillon, pre { background: none; box-shadow: none; }
+  .carte, .modale, .echantillon, pre, code { background: none; box-shadow: none; }
   .scene-modale { background: none; border: var(--trait-largeur) solid var(--trait); }
   .scene-modale .voile { display: none; }
   .bouton-principal { background: none; color: var(--texte); border: var(--focus-largeur) solid var(--texte); }

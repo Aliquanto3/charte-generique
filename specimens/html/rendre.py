@@ -28,7 +28,7 @@ def edge(profil: str, *args: str) -> None:
 def png(profil: str, theme: str) -> None:
     sortie = RENDUS / f"specimen-{theme}.png"
     edge(profil, f"--screenshot={sortie}", f"--window-size={LARGEUR},{HAUTEUR_MAX}",
-         f"{PAGE}?theme={theme}&nofocus=")
+         f"{PAGE}?theme={theme}")
     img = Image.open(sortie).convert("RGB")
     # Recadre le bas uni : cherche la dernière ligne différente du fond.
     fond = img.getpixel((2, img.height - 1))

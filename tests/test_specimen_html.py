@@ -7,6 +7,9 @@ HTML = RACINE / "specimens" / "html"
 CSS_CHARTE = RACINE / "skills" / "charte" / "dist" / "charte.css"
 RENDUS = ["specimen-sombre.png", "specimen-clair.png", "specimen-clair.pdf",
           "specimen-gris.pdf", "specimen-gris-page1.png"]
+COULEURS_NOMMEES = {"white", "black", "red", "green", "blue", "gray", "grey", "silver",
+                    "yellow", "orange", "purple", "navy", "teal", "maroon", "olive", "lime",
+                    "aqua", "fuchsia", "pink", "brown", "gold"}
 
 
 def _texte(nom):
@@ -30,6 +33,11 @@ def test_aucune_couleur_en_dur():
     for nom in ("composants.css", "specimen.html"):
         texte = re.sub(r"&#\d+;", "", _texte(nom))
         assert not motif.findall(texte), nom
+        # Couleurs nommées dans une propriété CSS ou un attribut SVG de couleur.
+        nommees = re.findall(r"(?:color|background|fill|stroke|border[a-z-]*)\s*[:=]\s*\"?([^;\"}]*)", texte)
+        for valeur in nommees:
+            mots = set(re.sub(r"var\([^)]*\)", "", valeur).split())
+            assert not mots & COULEURS_NOMMEES, f"{nom} : {valeur}"
 
 
 def test_liens_et_polices():
@@ -42,12 +50,19 @@ def test_liens_et_polices():
 
 def test_contenu_attendu():
     page = _texte("specimen.html")
+    classes = {c for attr in re.findall(r'class="([^"]+)"', page) for c in attr.split()}
     for classe in ("titre-1", "titre-2", "titre-3", "titre-4", "bouton-principal",
                    "bouton-secondaire", "champ-erreur", "pastille-succes", "pastille-alerte",
                    "pastille-erreur", "pastille-accent", "pastille-info", "bandeau-succes",
                    "carte", "scene-modale", "c8", "nuancier"):
-        assert f'"{classe}' in page or f" {classe}" in page, classe
-    assert "disabled" in page and 'data-theme' in page.replace("dataset.theme", "data-theme")
+        assert classe in classes, classe
+    assert re.search(r"<button[^>]*\bdisabled\b", page)
+    assert "documentElement.dataset.theme" in page
+    assert len(re.findall(r'<svg class="graphique"', page)) == 2
+    for svg in re.findall(r'<svg class="graphique"[^>]*>', page):
+        assert 'role="img"' in svg and "aria-label=" in svg
+    assert len(re.findall(r'<polyline class="ligne c[1-8]"', page)) == 8
+    assert len(re.findall(r'<rect class="c[1-4]"', page)) == 4
     assert "@media print" in _texte("composants.css")
 
 

@@ -10,6 +10,8 @@ uv run --group specimens python specimens/html/rendre.py
 
 Edge headless (Windows) ; la page prend `?theme=clair|sombre`, `&gris=1` (filtre `grayscale(1)`) et `&nofocus=1`.
 
+Sans `nofocus`, le bouton « Focus visible » est focalisé au chargement : les PNG sombre et clair montrent donc l'anneau de focus, à dessein. Les PDF et le PNG gris sont rendus avec `nofocus=1`, sans anneau.
+
 ## Fichiers
 
 - `specimen.html` : la page ;
@@ -21,6 +23,7 @@ Edge headless (Windows) ; la page prend `?theme=clair|sombre`, `&gris=1` (filtre
 
 ## Constats pour la critique
 
+- **Conflit de charte, bordure du bouton secondaire.** La charte (§1) exige 3:1 pour une marque non textuelle, « bordure de bouton » comprise, mais prescrit aussi « boutons secondaires : bordure `trait` ». Or `trait` atteint 1,53:1 sur `surface` (1,65:1 sur `fond`) en sombre, et 1,48:1 sur `surface` (1,39:1 sur `fond`) en clair. Le spécimen applique la règle telle quelle, sans la masquer ; le contour se voit à peine en clair. Options : bordure en `neutre` (5,48:1 en sombre, 4,47:1 en clair sur `surface`), comme les champs du spécimen ; ou un nouveau jeton `trait-fort` (≥ 3:1) en v2.1, `trait` restant aux séparateurs. Le bouton désactivé garde `trait` : WCAG exempte les composants inactifs.
 - Les pastilles de statut portent icône et libellé : le sens ne passe pas par la couleur seule.
 - Dans le graphique à huit lignes, les séries 5 à 8 restent proches en gris ; seule la légende directe les distingue (pas de motif).
 - Les bandeaux `*-doux` se distinguent peu les uns des autres en niveaux de gris : seul le texte en gras (« Succès. », « Alerte. »…) porte le sens.
