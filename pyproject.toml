@@ -1,0 +1,32 @@
+[project]
+name = "charte-generique"
+version = "0.1.0"
+description = "Charte graphique générique (sombre d'abord) : jetons DTCG, générateurs, contrôles d'accessibilité et skill Claude Code."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+# Bibliothèques des spécimens (stories 2 à 5) : ajoutées par les stories qui en ont besoin.
+specimens = []
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["skills/charte/outils", "skills/charte"]
+addopts = "-q --tb=short"
+
+[tool.ruff]
+line-length = 160
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E731"]
+
+[tool.pyright]
+extraPaths = ["skills/charte/outils", "skills/charte"]

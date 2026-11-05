@@ -1,0 +1,9 @@
+{
+  "name": "charte",
+  "version": "0.1.0",
+  "description": "Charte graphique générique, sombre d'abord : jetons DTCG, fichiers prêts à l'emploi (CSS, Python, Streamlit, Office, mermaid) et contrôles d'accessibilité.",
+  "author": { "name": "Aliquanto3" },
+  "repository": "https://github.com/Aliquanto3/charte-generique",
+  "license": "MIT",
+  "keywords": ["design-tokens", "dtcg", "accessibility", "wcag", "theme", "charte"]
+}
