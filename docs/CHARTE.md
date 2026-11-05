@@ -34,7 +34,7 @@ Valeurs en sombre, puis en clair. Les noms de rôle sont ceux des jetons.
 | `texte` | #E8ECF2 | #121821 | texte courant, titres |
 | `texte-attenue` | #A3ADBA | #4F5A68 | texte secondaire, légende |
 | `neutre` | #8792A0 | #6E7886 | indicateur neutre, état indisponible (non textuel) |
-| `primaire` | #8DB0F7 | #1D5BC2 | lien, sélection, tuile du pictogramme, série 1 ; jamais un aplat de bouton |
+| `primaire` | #8DB0F7 | #1D5BC2 | lien, sélection, série 1 ; jamais un aplat de bouton |
 | `primaire-vif` | #B3CBFA | #164A9E | lien survolé, titre fort |
 | `primaire-doux` | #1A2742 | #E1EAFA | fond de sélection, pastille d'information |
 | `sur-primaire` | #0A1733 | #FFFFFF | texte ou trait sur `primaire` (barres du pictogramme) |
@@ -43,7 +43,7 @@ Valeurs en sombre, puis en clair. Les noms de rôle sont ceux des jetons.
 | `sur-bouton` | #0F1318 | #FFFFFF | libellé du bouton principal |
 | `accent` | #E3C26B | #8F6300 | marque fine d'accent (or), non textuelle : filet sous le titre, liseré |
 | `accent-texte` | #E3C26B | #8A5F00 | texte d'accent |
-| `accent-doux` | #3A3112 | #FBF1D6 | bandeau d'accent ; point du pictogramme en sombre |
+| `accent-doux` | #3A3112 | #FBF1D6 | bandeau d'accent |
 | `accent-aplat` | #E3C26B | #E0B54A | grand aplat d'or (chiffre clé, moitié de diapositive), avec `texte-sur-vif` (et `texte` en clair) ; point du pictogramme en clair ; jamais une marque fine en clair (1,93:1 sur blanc) |
 | `succes` | #8CC7A0 | #1B7043 | succès, état valide (texte et pastille) |
 | `succes-doux` | #15291D | #E2F1E8 | bandeau de succès |
@@ -59,6 +59,8 @@ Valeurs en sombre, puis en clair. Les noms de rôle sont ceux des jetons.
 | `sur-encre` | #FFFFFF | #FFFFFF | texte sur `encre-pleine` ou sur `badge-etiquette` |
 | `sur-encre-attenue` | #C3CEDD | #C3CEDD | texte secondaire sur `encre-pleine` |
 | `badge-etiquette` | #646E7B | #646E7B | moitié gauche (étiquette) des badges de README, même valeur dans les deux thèmes |
+| `pictogramme-tuile` | #3B6FD0 | #1D5BC2 | tuile du pictogramme ; en clair, alias de `primaire` |
+| `pictogramme-point` | #F0D27A | #E0B54A | point d'or du pictogramme ; en clair, alias d'`accent-aplat` |
 | `voile` | rgba(5, 8, 12, 0.6) | rgba(18, 24, 33, 0.32) | voile de modale |
 | `halo` | 0 8px 24px rgba(232, 236, 242, 0.07) | 0 8px 24px rgba(18, 24, 33, 0.08) | ombre portée douce (carte, menu, modale) |
 
@@ -123,7 +125,7 @@ Les pas bas et le centre restent sous 3:1 sur `surface` : ces deux palettes serv
   - en aplat : `sur-statut` sur `erreur`, `succes` ou `accent`, et `texte-sur-vif` sur `alerte` ou `accent-aplat` ;
   - toujours avec une icône ou un libellé.
 - **Or** : `accent` pour les marques fines (filet, liseré), `accent-texte` pour le texte, `accent-aplat` pour les grands aplats.
-- **Fond sombre** : sur tout aplat sombre, même dans un document clair (couverture, bandeau, terminal), le pictogramme, le filet et les accents prennent les valeurs du thème sombre. Tuile `#8DB0F7` à 8,22:1 et or `#E3C26B` à 10,35:1 sur `encre-pleine` clair.
+- **Fond sombre** : sur tout aplat sombre, même dans un document clair (couverture, bandeau, terminal), le pictogramme, le filet et les accents prennent les valeurs du thème sombre. Tuile `#3B6FD0` à 3,71:1 et filet or `#E3C26B` à 10,35:1 sur `encre-pleine` clair.
 - **Focus** : anneau de 2 px en `focus`, décalé de 2 px, visible sur tout élément interactif.
 - **Modale et menus** : `voile` derrière, `surface`, contour `trait-fort` et `halo` pour la boîte, rayon `grand`.
 
@@ -154,14 +156,14 @@ Les pas bas et le centre restent sous 3:1 sur `surface` : ces deux palettes serv
 
 ## Pictogramme
 
-Le pictogramme se compose de trois barres. Celle du milieu est plus courte et se termine par un point d'accent. Les couleurs sont choisies par mesure, par thème (`jetons.PICTOGRAMME`, paires contrôlées par `contrastes.py`) :
+Le pictogramme se compose de trois barres. Celle du milieu est plus courte et se termine par un point d'accent. Une tuile bleue, un point or : tuile et point ont leurs propres jetons, `pictogramme-tuile` et `pictogramme-point` (décision d'Anaël du 2026-11-05), lus par `jetons.PICTOGRAMME` ; les paires sont contrôlées par `contrastes.py`.
 
-| Thème | Tuile | Barres | Point | Point sur tuile | Tuile sur `fond` |
-|---|---|---|---|---|---|
-| sombre | `primaire` | `sur-primaire` | `accent-doux` | 5,95:1 | 8,60:1 (6,86:1 sur `encre-pleine`, 8,22:1 sur `encre-pleine` clair) |
-| clair | `primaire` | `sur-primaire` | `accent-aplat` | 3,27:1 | 5,93:1 |
+| Thème | Tuile | Barres | Point | Point sur tuile | Barres sur tuile | Tuile sur `fond`, `surface`, `encre-pleine` |
+|---|---|---|---|---|---|---|
+| sombre | `pictogramme-tuile` #3B6FD0 | `sur-primaire` | `pictogramme-point` #F0D27A | 3,25:1 | 3,69:1 | 3,88, 3,60 et 3,09:1 (3,71:1 sur `encre-pleine` clair) |
+| clair | `pictogramme-tuile` = `primaire` | `sur-primaire` | `pictogramme-point` = `accent-aplat` | 3,27:1 | 6,31:1 | 5,93 et 6,31:1 |
 
-En sombre, l'or `#E3C26B` sur la tuile `#8DB0F7` ne fait que 1,26:1 : aucun or clair ne peut atteindre 3:1 sur une tuile claire, et une tuile assez sombre pour l'or clair passerait sous 3:1 sur `encre-pleine`. Le point sombre est donc l'or bruni `accent-doux`. Le pictogramme clair ne se pose que sur un fond clair ; sur un aplat sombre, on prend le sombre (règle « fond sombre »).
+Pourquoi une tuile propre au sombre : l'or `#E3C26B` sur `primaire` sombre `#8DB0F7` ne fait que 1,26:1. Avec la tuile bleu moyen `#3B6FD0` et l'or clair `#F0D27A`, le point garde 3:1 et la tuile tient 3:1 sur tous les fonds sombres. Le pictogramme clair ne se pose que sur un fond clair ; sur un aplat sombre, on prend le sombre (règle « fond sombre »).
 
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
@@ -255,7 +257,7 @@ D'après la critique sur pièces (`docs/critique-v2.0.md`), sections 3A et 3B :
 - **A1** : valeurs de `cat-4` et `cat-5` permutées dans les deux thèmes (framboise en 4, corail en 5). Pire paire 1 à 4 en deutéranopie : 4,4 → 9,9 en clair, 5,9 → 13,7 en sombre.
 - **A2** : motifs (tirets, marqueurs, hachures) dans les gabarits matplotlib et dans `MOTIFS` pour plotly ; étiquettes directes sans chevauchement dans les spécimens.
 - **A3, A12** : repli Segoe UI documenté ; règles de diapositive (titres ≥ 28 pt, six séries au plus, étiquettes de données).
-- **A4** : règle « fond sombre » ; pictogramme choisi par mesure dans chaque thème (`PICTOGRAMME`).
+- **A4** : règle « fond sombre » ; pictogramme choisi par mesure dans chaque thème ; jetons `pictogramme-tuile` et `pictogramme-point` (décision d'Anaël du 2026-11-05).
 - **A5** : nouveau jeton `trait-fort` pour les contours interactifs.
 - **A6** : palettes `seq-1` à `seq-5` et `div-1` à `div-5`.
 - **A7** : règle d'impression et de gris.

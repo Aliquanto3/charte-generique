@@ -47,6 +47,9 @@ def test_hex_egal_composantes(theme):
     assert len(a_voir) > 50
     for jeton in a_voir:
         v = jeton["$value"]
+        if isinstance(v, str):  # alias DTCG, résolu par charger()
+            assert v.startswith("{theme.") and v.endswith("}"), v
+            continue
         rvb = "#" + "".join(f"{round(c * 255):02X}" for c in v["components"])
         assert rvb == v["hex"].upper()
 
@@ -99,3 +102,24 @@ def test_couleur_alpha():
     assert couleur_css({"colorSpace": "srgb", "components": [0, 0, 1], "alpha": 0.5}) == "rgba(0, 0, 255, 0.5)"
     with pytest.raises(ValueError):
         couleur_css({"colorSpace": "display-p3", "components": [0, 0, 0]})
+
+
+def test_alias_dtcg(tmp_path):
+    """Un alias `{theme.clair.couleur.primaire}` prend la valeur visée ; un alias cassé est une erreur."""
+    from jetons import resoudre
+
+    brut = json.loads(CHEMIN.read_text(encoding="utf-8"))
+    assert brut["theme"]["clair"]["couleur"]["pictogramme-tuile"]["$value"] == "{theme.clair.couleur.primaire}"
+    assert resoudre(brut, "{theme.clair.couleur.primaire}")["hex"] == "#1D5BC2"
+    assert resoudre(brut, "texte simple") == "texte simple"
+    with pytest.raises(ValueError, match="introuvable"):
+        resoudre(brut, "{theme.clair.couleur.absent}")
+    brut["theme"]["clair"]["couleur"]["boucle"] = {"$value": "{theme.clair.couleur.boucle}"}
+    with pytest.raises(ValueError, match="boucle"):
+        resoudre(brut, "{theme.clair.couleur.boucle}")
+    copie = tmp_path / "j.json"
+    brut["theme"]["clair"]["couleur"]["primaire"]["$value"]["hex"] = "#010203"
+    brut["theme"]["clair"]["couleur"]["primaire"]["$value"]["components"] = [1 / 255, 2 / 255, 3 / 255]
+    del brut["theme"]["clair"]["couleur"]["boucle"]
+    copie.write_text(json.dumps(brut), encoding="utf-8")
+    assert charger(copie)["clair"]["pictogramme-tuile"] == "#010203"  # l'alias suit sa cible

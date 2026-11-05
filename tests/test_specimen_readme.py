@@ -133,14 +133,17 @@ def test_apercu_social_a11():
     """A11 : titre ≥ 64 px, aucun texte sous 28 px, tout dans les marges sûres de 80 px, zone centrée, filet or."""
     textes, racine = _textes("apercu-social.svg")
     assert (racine.get("width"), racine.get("height")) == ("1280", "640")
+    g = _bannieres()
     tailles = [float(t.get("font-size")) for t in textes]
-    assert max(tailles) >= 64 and min(tailles) >= 28
+    assert max(tailles) >= g.TITRE_APERCU_MIN == 64 and min(tailles) >= g.TEXTE_APERCU_MIN == 28
+    marge, (largeur, hauteur) = g.MARGE_APERCU, g.APERCU
+    assert marge == 80
     for t in textes:
         x, y, taille = float(t.get("x")), float(t.get("y")), float(t.get("font-size"))
         assert t.get("text-anchor") == "middle" and x == 640  # zone utile centrée
         demi = len(t.text) * 0.62 * taille / 2  # largeur estimée (Sora 600 : ~0,6 em par signe)
-        assert 80 <= x - demi and x + demi <= 1200, t.text
-        assert 80 <= y - taille and y <= 560, t.text
+        assert marge <= x - demi and x + demi <= largeur - marge, t.text
+        assert marge <= y - taille and y <= hauteur - marge, t.text
     g = next(e for e in racine.iter() if e.tag.endswith("}g"))
     assert re.search(r"translate\((\d+) (\d+)\)", g.get("transform")).groups() == ("576", "144")
 
@@ -155,3 +158,12 @@ def test_filet_or_b5(nom):
     assert len(filets) == 1 and filets[0].get("fill") == j[theme]["accent"]
     titre = max(_textes(nom)[0], key=lambda t: float(t.get("font-size")))
     assert float(filets[0].get("y")) > float(titre.get("y"))
+
+
+def _bannieres():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("generer_bannieres", DOSSIER / "generer_bannieres.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m

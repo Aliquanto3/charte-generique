@@ -46,25 +46,32 @@ def _paire(j, theme, debut):
 
 
 def test_paires_pictogramme_a4():
-    """Point ≥ 3:1 sur la tuile, tuile ≥ 3:1 sur `fond` et `encre-pleine`, valeurs sombres sur aplat sombre (A4)."""
+    """Point ≥ 3:1 sur la tuile, tuile ≥ 3:1 sur `fond`, `surface` et `encre-pleine`, valeurs sombres sur aplat sombre (A4).
+
+    Décision d'Anaël du 2026-11-05 : en sombre, tuile #3B6FD0 et point #F0D27A ; en clair, `primaire` et `accent-aplat`.
+    """
     j = charger()
+    s, c = j["sombre"], j["clair"]
+    assert (s["pictogramme-tuile"], s["pictogramme-point"]) == ("#3B6FD0", "#F0D27A")
+    assert (c["pictogramme-tuile"], c["pictogramme-point"]) == (c["primaire"], c["accent-aplat"])
     point_clair = _paire(j, "clair", "point")
-    assert point_clair[2:5] == ("#E0B54A", "tuile primaire", "#1D5BC2")  # accent-aplat sur primaire
+    assert point_clair[2:5] == ("#E0B54A", "tuile pictogramme-tuile", "#1D5BC2")
     assert round(contraste(point_clair[2], point_clair[4]), 2) == 3.27
-    point_sombre = _paire(j, "sombre", "point")
-    assert contraste(point_sombre[2], point_sombre[4]) >= 3
-    # l'or sombre sur la tuile sombre ne passe pas : c'est pourquoi le point sombre n'est pas `accent`
-    assert contraste(j["sombre"]["accent"], j["sombre"]["primaire"]) < 1.3
+    assert round(contraste(s["pictogramme-point"], s["pictogramme-tuile"]), 2) == 3.25
+    assert [round(contraste(s["pictogramme-tuile"], s[f]), 2) for f in ("fond", "surface", "encre-pleine")] == [3.88, 3.60, 3.09]
+    assert round(contraste(s["sur-primaire"], s["pictogramme-tuile"]), 2) == 3.69  # barres
+    # l'or sombre sur la tuile `primaire` sombre ne passe pas : d'où une tuile propre au pictogramme
+    assert contraste(s["accent"], s["primaire"]) < 1.3
     sur_aplat = [p for p in paires_pictogramme(j) if p[0] == "sombre sur aplat clair"]
-    assert [round(contraste(p[2], p[4]), 2) for p in sur_aplat] == [8.22, 10.35]
+    assert [round(contraste(p[2], p[4]), 2) for p in sur_aplat] == [3.71, 10.35]
     assert all(contraste(p[2], p[4]) >= p[5] for p in paires_pictogramme(j))
 
 
 def test_paire_pictogramme_en_echec_detectee():
     j = copy.deepcopy(charger())
-    j["clair"]["accent-aplat"] = j["clair"]["primaire"]
+    j["clair"]["pictogramme-point"] = j["clair"]["primaire"]
     _, echecs = verifier(j)
-    assert any("point accent-aplat/tuile primaire" in e for e in echecs)
+    assert any("point pictogramme-point/tuile pictogramme-tuile" in e for e in echecs)
 
 
 def test_badge_sur_pages_github():

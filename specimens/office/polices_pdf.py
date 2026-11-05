@@ -89,6 +89,17 @@ def programmes(donnees: bytes) -> dict[str, str]:
     return out
 
 
+def manquantes(pdfs: list[Path]) -> list[str]:
+    """« <pdf> : manquent Sora, … » pour chaque PDF auquel manque une police requise ; liste vide si tout y est."""
+    out = []
+    for pdf in pdfs:
+        noms = polices_pdf(pdf.read_bytes())
+        absentes = [r for r in REQUISES if not any(n.startswith(r) for n in noms)]
+        if absentes:
+            out.append(f"{pdf.name} : manquent {', '.join(absentes)}")
+    return out
+
+
 def installees() -> list[str]:
     """Fichiers ou entrées de registre des polices de la charte sur le poste (système, utilisateur, HKCU, HKLM)."""
     trouve = []
@@ -130,13 +141,11 @@ def main(argv: list[str] | None = None) -> int:
     if poste:
         code = 1
     for pdf in pdfs:
-        noms = sorted(polices_pdf(pdf.read_bytes()))
-        manquantes = [r for r in REQUISES if not any(n.startswith(r) for n in noms)]
-        print(f"{pdf.name} : {', '.join(noms)}")
-        if manquantes:
-            print(f"{pdf.name} : manquent {', '.join(manquantes)}")
-            code = 1
-    return code
+        print(f"{pdf.name} : {', '.join(sorted(polices_pdf(pdf.read_bytes())))}")
+    manques = manquantes(pdfs)
+    for m in manques:
+        print(m)
+    return 1 if manques else code
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@
 Bibliothèque standard seulement : ces tests tournent en CI, sans python-pptx ni python-docx.
 """
 import importlib.util
+import os
 import re
 import struct
 import sys
@@ -134,7 +135,7 @@ def test_preuve_pdf_lecture(pdf):
     assert pdf.polices_pdf(faux) >= {"1", "Sora-SemiBold"}
     assert pdf.programmes(faux) == {"1": "Sora-SemiBold"}
     assert pdf.nom_postscript(b"pas une police") is None
-    assert pdf.main([str(OFFICE / "rendus" / "deck.pdf"), str(OFFICE / "rendus" / "rapport.pdf")]) in (0, 1)
+    assert pdf.manquantes([OFFICE / "rendus" / "deck.pdf", OFFICE / "rendus" / "rapport.pdf"]) == []
 
 
 @pytest.mark.parametrize("nom", ["deck.pdf", "rapport.pdf"])
@@ -143,3 +144,26 @@ def test_pdf_rendus_portent_les_polices(pdf, nom):
     noms = pdf.polices_pdf((OFFICE / "rendus" / nom).read_bytes())
     for attendu in ("Sora-SemiBold", "AtkinsonHyperlegible-Regular", "JetBrainsMono-Regular"):
         assert attendu in noms, (nom, sorted(noms))
+
+
+def test_preuve_echoue_sans_les_polices(pdf, tmp_path):
+    vide = tmp_path / "vide.pdf"
+    vide.write_bytes(b"%PDF-1.7\n1 0 obj\n<</Type/Font/BaseFont/Calibri>>\nendobj\n")
+    assert pdf.manquantes([vide]) == ["vide.pdf : manquent Sora, Atkinson"]
+
+
+@pytest.mark.skipif(os.environ.get("CHARTE_VERIFIER_POSTE") != "1", reason="contrôle du poste de rendu, facultatif (CHARTE_VERIFIER_POSTE=1)")
+def test_polices_absentes_du_poste(pdf):
+    """Sur le poste qui rend les spécimens : aucune police de la charte installée (sinon la preuve ne vaut rien)."""
+    assert pdf.installees() == []
+
+
+def test_type_de_contenu_jamais_silencieux(inc):
+    f = inc._type_defaut("odttf", "application/x-test")
+    sortie = f(b'<Types xmlns="x"><Override PartName="/a" ContentType="b"/></Types>').decode("utf-8")
+    assert sortie.startswith('<Types xmlns="x"><Default Extension="odttf" ContentType="application/x-test"/><Override')
+    assert f(sortie.encode("utf-8")).decode("utf-8") == sortie  # idempotent
+    with pytest.raises(ValueError, match="sans élément"):
+        f(b"<Autre/>")
+    with pytest.raises(ValueError, match="inattendu"):
+        f(b'<Types><Default Extension="odttf" ContentType="autre"/></Types>')

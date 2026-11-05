@@ -131,8 +131,13 @@ def reecrire(chemin: Path, modifier: dict[str, Callable[[bytes], bytes]], ajoute
 def _type_defaut(ext: str, type_contenu: str) -> Callable[[bytes], bytes]:
     def f(xml: bytes) -> bytes:
         s = xml.decode("utf-8")
-        if f'Extension="{ext}"' not in s:
-            s = s.replace("<Default ", f'<Default Extension="{ext}" ContentType="{type_contenu}"/><Default ', 1)
+        defaut = f'<Default Extension="{ext}" ContentType="{type_contenu}"/>'
+        if f'Extension="{ext}"' not in s:  # premier enfant de <Types> : les Default précèdent les Override
+            s, n = re.subn(r"(<Types\b[^>]*>)", lambda m: m.group(1) + defaut, s, count=1)
+            if n != 1:
+                raise ValueError("[Content_Types].xml sans élément <Types>")
+        elif defaut not in s:
+            raise ValueError(f"type de contenu inattendu pour .{ext} dans [Content_Types].xml")
         return s.encode("utf-8")
     return f
 
@@ -190,7 +195,10 @@ def incorporer_pptx(chemin: Path, format: str = "eot") -> list[str]:
             + "</p:embeddedFont>" for nom, (role, styles) in entrees.items()) + "</p:embeddedFontLst>"
         s, n = re.subn(r"(<p:notesSz[^>]*/>)", lambda m: m.group(1) + lst, s, count=1)
         assert n == 1, "presentation.xml sans p:notesSz"
-        racine = re.search(r"<p:presentation\b[^>]*>", s).group(0)
+        m = re.search(r"<p:presentation\b[^>]*>", s)  # préfixe `p:` : celui qu'écrivent python-pptx et PowerPoint
+        if m is None:
+            raise ValueError("presentation.xml sans élément <p:presentation>")
+        racine = m.group(0)
         nouvelle = racine
         for attr in ("embedTrueTypeFonts", "saveSubsetFonts"):
             if f"{attr}=" not in nouvelle:

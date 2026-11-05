@@ -70,6 +70,7 @@ PASTILLES = ("succes", "alerte-texte", "erreur", "accent-texte", "primaire")
 TAUX_PASTILLE = 0.13
 # Jetons comparés aux couleurs à éviter.
 IDENTITE = ("primaire", "accent", "bouton", *[f"cat-{i}" for i in range(1, 9)], "trait-fort", "accent-aplat", "badge-etiquette",
+            "pictogramme-tuile", "pictogramme-point",
             *[f"seq-{i}" for i in range(1, 6)], *[f"div-{i}" for i in range(1, 6)])
 
 
@@ -84,6 +85,7 @@ def paires_pictogramme(j: dict) -> list[tuple[str, str, str, str, str, float, st
         t, r = j[theme], PICTOGRAMME[theme]
         tuile = (f"{r['tuile']}", t[r["tuile"]])
         out.append((theme, f"point {r['point']}", t[r["point"]], f"tuile {r['tuile']}", tuile[1], 3.0, "point du pictogramme"))
+        out.append((theme, f"barres {r['barres']}", t[r["barres"]], f"tuile {r['tuile']}", tuile[1], 3.0, "barres du pictogramme"))
         for fond in ("fond", "surface", "encre-pleine") if theme == "sombre" else ("fond", "surface"):
             out.append((theme, f"tuile {r['tuile']}", tuile[1], fond, t[fond], 3.0, "tuile du pictogramme"))
         out.append((theme, "filet accent", t["accent"], "fond", t["fond"], 3.0, "filet or sous le titre"))

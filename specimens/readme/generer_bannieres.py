@@ -21,9 +21,11 @@ NOM = "Projet témoin"
 SOUS_TITRE = "Dépôt type à la charte générique"
 # Règle A11 de l'aperçu social
 APERCU = (1280, 640)
-MARGE_APERCU = 80
-TITRE_APERCU = 72  # px, au moins 64
-TEXTE_APERCU = 32  # px, aucun texte sous 28
+MARGE_APERCU = 80  # px, marges sûres
+TITRE_APERCU_MIN = 64  # px, taille minimale du titre
+TEXTE_APERCU_MIN = 28  # px, aucun texte plus petit
+TITRE_APERCU = 72
+TEXTE_APERCU = 32
 
 
 def _police(j: dict) -> str:

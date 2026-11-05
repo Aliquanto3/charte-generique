@@ -24,14 +24,13 @@ Licence : les SVG embarquent Sora 600 (sous-ensemble latin, base64), sous SIL Op
 - **Bannière (A8)** : `<img>` de repli clair, le thème par défaut de GitHub.
 - **Badges (A8)** : étiquette `labelColor` en `badge-etiquette` `#646E7B`, la même dans les deux thèmes (blanc 5,17:1 ; 3,60:1 sur le fond sombre, 4,86:1 sur le clair).
 - **Aperçu social (A11)** : bloc centré (pictogramme, titre, filet, sous-titre) entre 144 et 486 px de haut, dans les marges de 80 px ; titre de 72 px, sous-titre de 32 px.
-- **Pictogramme (A4)** : couleurs de `jetons.PICTOGRAMME` (point `accent-aplat` en clair, `accent-doux` en sombre) ; filet or (`accent`) sous le titre de chaque SVG (B5).
+- **Pictogramme (A4)** : jetons `pictogramme-tuile` et `pictogramme-point` (en sombre, tuile #3B6FD0 et point #F0D27A, décision d'Anaël du 2026-11-05) ; filet or (`accent`) sous le titre de chaque SVG (B5).
 
 ## Constats pour la critique
 
 - Badges : shields.io impose texte blanc ou `#333333`. `alerte` (#E8892A) échoue avec les deux ; remplacé par `alerte-texte` (#9A4A00). `neutre` échoue ; remplacé par `texte-attenue` (#4F5A68).
 - Badges : le rendu local imite shields.io en HTML (Verdana) ; les vrais badges demandent le réseau.
 - Le sous-titre des bannières est composé en Sora 600 (seule police embarquée), un peu lourd pour un texte secondaire.
-- Point du pictogramme en sombre (`accent-doux`) : or bruni, peu lisible comme « or » ; voir `specimens/office/LISEZMOI.md`.
 - Le rendu du README est un HTML de style GitHub simplifié, non le rendu réel de GitHub ; à vérifier sur GitHub après fusion, en particulier le thème `neutral` du bloc mermaid.
 
 ## Revue

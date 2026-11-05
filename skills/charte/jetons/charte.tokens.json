@@ -242,6 +242,22 @@
             "hex": "#646E7B"
           }
         },
+        "pictogramme-tuile": {
+          "$description": "Décision d'Anaël du 2026-11-05 : tuile du pictogramme (≥ 3:1 sur fond, surface et encre-pleine).",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [0.2314, 0.4353, 0.8157],
+            "hex": "#3B6FD0"
+          }
+        },
+        "pictogramme-point": {
+          "$description": "Décision d'Anaël du 2026-11-05 : point d'or du pictogramme (≥ 3:1 sur la tuile).",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [0.9412, 0.8235, 0.4784],
+            "hex": "#F0D27A"
+          }
+        },
         "voile": {
           "$value": {
             "colorSpace": "srgb",
@@ -648,6 +664,14 @@
             "components": [0.3922, 0.4314, 0.4824],
             "hex": "#646E7B"
           }
+        },
+        "pictogramme-tuile": {
+          "$description": "Décision d'Anaël du 2026-11-05 : tuile du pictogramme (≥ 3:1 sur fond, surface et encre-pleine).",
+          "$value": "{theme.clair.couleur.primaire}"
+        },
+        "pictogramme-point": {
+          "$description": "Décision d'Anaël du 2026-11-05 : point d'or du pictogramme (≥ 3:1 sur la tuile).",
+          "$value": "{theme.clair.couleur.accent-aplat}"
         },
         "voile": {
           "$value": {

@@ -35,6 +35,8 @@
   --sur-encre: #FFFFFF;
   --sur-encre-attenue: #C3CEDD;
   --badge-etiquette: #646E7B;
+  --pictogramme-tuile: #3B6FD0;
+  --pictogramme-point: #F0D27A;
   --voile: rgba(5, 8, 12, 0.6);
   --cat-1: #8DB0F7;
   --cat-2: #E3C26B;
@@ -55,9 +57,9 @@
   --div-4: #886254;
   --div-5: #F2A07B;
   --halo: 0 8px 24px rgba(232, 236, 242, 0.07);
-  --picto-tuile: var(--primaire);
+  --picto-tuile: var(--pictogramme-tuile);
   --picto-barres: var(--sur-primaire);
-  --picto-point: var(--accent-doux);
+  --picto-point: var(--pictogramme-point);
 
   --police-titres: Sora, system-ui, 'Segoe UI', Roboto, sans-serif;
   --police-texte: 'Atkinson Hyperlegible', system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -124,6 +126,8 @@
     --sur-encre: #FFFFFF;
     --sur-encre-attenue: #C3CEDD;
     --badge-etiquette: #646E7B;
+    --pictogramme-tuile: #1D5BC2;
+    --pictogramme-point: #E0B54A;
     --voile: rgba(18, 24, 33, 0.32);
     --cat-1: #1D5BC2;
     --cat-2: #A87A00;
@@ -144,9 +148,9 @@
     --div-4: #D79E88;
     --div-5: #C24D1B;
     --halo: 0 8px 24px rgba(18, 24, 33, 0.08);
-    --picto-tuile: var(--primaire);
+    --picto-tuile: var(--pictogramme-tuile);
     --picto-barres: var(--sur-primaire);
-    --picto-point: var(--accent-aplat);
+    --picto-point: var(--pictogramme-point);
   }
 }
 
@@ -186,6 +190,8 @@
   --sur-encre: #FFFFFF;
   --sur-encre-attenue: #C3CEDD;
   --badge-etiquette: #646E7B;
+  --pictogramme-tuile: #1D5BC2;
+  --pictogramme-point: #E0B54A;
   --voile: rgba(18, 24, 33, 0.32);
   --cat-1: #1D5BC2;
   --cat-2: #A87A00;
@@ -206,9 +212,9 @@
   --div-4: #D79E88;
   --div-5: #C24D1B;
   --halo: 0 8px 24px rgba(18, 24, 33, 0.08);
-  --picto-tuile: var(--primaire);
+  --picto-tuile: var(--pictogramme-tuile);
   --picto-barres: var(--sur-primaire);
-  --picto-point: var(--accent-aplat);
+  --picto-point: var(--pictogramme-point);
 }
 
 [data-theme="sombre"],
@@ -247,6 +253,8 @@
   --sur-encre: #FFFFFF;
   --sur-encre-attenue: #C3CEDD;
   --badge-etiquette: #646E7B;
+  --pictogramme-tuile: #3B6FD0;
+  --pictogramme-point: #F0D27A;
   --voile: rgba(5, 8, 12, 0.6);
   --cat-1: #8DB0F7;
   --cat-2: #E3C26B;
@@ -267,7 +275,7 @@
   --div-4: #886254;
   --div-5: #F2A07B;
   --halo: 0 8px 24px rgba(232, 236, 242, 0.07);
-  --picto-tuile: var(--primaire);
+  --picto-tuile: var(--pictogramme-tuile);
   --picto-barres: var(--sur-primaire);
-  --picto-point: var(--accent-doux);
+  --picto-point: var(--pictogramme-point);
 }

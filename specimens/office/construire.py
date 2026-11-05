@@ -34,6 +34,8 @@ TITRES, TEXTE = "+mj-lt", "+mn-lt"  # polices du thème : Sora SemiBold et Atkin
 POLICE_TITRES, POLICE_TEXTE, POLICE_CODE = (J["police"][r]["office"] for r in ("titres", "texte", "code"))  # noms vus par Office
 TITRE_DIAPO_PT = 28  # règle A12 : titres de diapositive d'au moins 28 pt
 SERIES_DIAPO = 6  # règle A12 : au plus six séries par graphique de diapositive (thème Office : accent1 à accent6)
+ETIQUETTE_DONNEES_DES = 5  # règle A12 : étiquette de données dès cinq séries
+ETIQUETTE_CLAIR_DES = 2  # règle A2 : étiquette directe dès deux séries en clair (le deck est clair)
 
 
 def rgb(hexa: str):
@@ -180,12 +182,13 @@ def deck(chemin: Path, fntdata: str = "eot") -> None:
         for i, serie in enumerate(ch.plots[0].series):
             serie.format.fill.solid()
             serie.format.fill.fore_color.theme_color = couleurs_theme[i]
-        ch.plots[0].has_data_labels = True
-        etiquettes = ch.plots[0].data_labels  # étiquette de données : nom de la série au bout de chaque barre
-        etiquettes.show_series_name, etiquettes.show_value = True, False
-        etiquettes.position = XL_LABEL_POSITION.OUTSIDE_END
-        etiquettes.font.size, etiquettes.font.name = Pt(pt(J["taille"]["legende"])), POLICE_TEXTE
-        etiquettes.font.color.rgb = rgb(C["texte"])
+        if nb >= min(ETIQUETTE_DONNEES_DES, ETIQUETTE_CLAIR_DES):  # deck clair : dès deux séries
+            ch.plots[0].has_data_labels = True
+            etiquettes = ch.plots[0].data_labels  # étiquette de données : nom de la série au bout de chaque barre
+            etiquettes.show_series_name, etiquettes.show_value = True, False
+            etiquettes.position = XL_LABEL_POSITION.OUTSIDE_END
+            etiquettes.font.size, etiquettes.font.name = Pt(pt(J["taille"]["legende"])), POLICE_TEXTE
+            etiquettes.font.color.rgb = rgb(C["texte"])
         ch.value_axis.major_gridlines.format.line.color.rgb = rgb(C["trait"])
         ch.value_axis.format.line.fill.background()
         ch.category_axis.format.line.color.rgb = rgb(C["trait"])

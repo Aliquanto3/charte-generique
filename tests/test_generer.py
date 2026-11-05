@@ -262,7 +262,7 @@ def test_svg(j):
     ET.fromstring(pic)
     assert 'aria-hidden="true"' in pic
     # var() dans une propriété `style`, pas dans un attribut de présentation (repli non garanti partout).
-    assert f'style="fill: var(--picto-tuile, {s["primaire"]})"' in pic
+    assert f'style="fill: var(--picto-tuile, {s["pictogramme-tuile"]})"' in pic
     assert f'style="stroke: var(--picto-barres, {s["sur-primaire"]})"' in pic
     assert f'style="fill: var(--picto-point, {s[PICTOGRAMME["sombre"]["point"]]})"' in pic
     assert not re.search(r'(fill|stroke)="var\(', pic)
@@ -270,5 +270,28 @@ def test_svg(j):
     ET.fromstring(fav)
     assert "var(" not in fav
     avant, apres = fav.split("@media (prefers-color-scheme: light)")
-    assert s["primaire"] in avant and c["primaire"] in apres
+    assert f".t {{ fill: {s['pictogramme-tuile']}; }}" in avant and f".t {{ fill: {c['primaire']}; }}" in apres
     assert f".p {{ fill: {c['accent-aplat']}; }}" in apres and f".p {{ fill: {s[PICTOGRAMME['sombre']['point']]}; }}" in avant
+
+
+CLES_MPL = {
+    "axes.prop_cycle", "figure.facecolor", "figure.edgecolor", "savefig.facecolor", "savefig.bbox", "axes.facecolor", "axes.edgecolor",
+    "axes.labelcolor", "axes.titlecolor", "axes.spines.top", "axes.spines.right", "axes.grid", "grid.color", "grid.linewidth",
+    "axes.axisbelow", "text.color", "xtick.color", "ytick.color", "font.family", "font.size", "axes.titlesize", "legend.facecolor",
+    "legend.edgecolor", "legend.labelcolor", "lines.linewidth", "lines.markersize",
+}
+
+
+@pytest.mark.parametrize("nom,document", [("charte-sombre.mplstyle", False), ("charte-clair.mplstyle", False), ("charte-document.mplstyle", True)])
+def test_mplstyle_cles_sans_matplotlib(nom, document):
+    """Contrôle texte, sans matplotlib (CI) : clés exactes, une par ligne, A10 (`savefig.bbox: tight`) et style document."""
+    d = _mpl(DIST / nom)
+    attendu = CLES_MPL | ({"axes.titlelocation", "legend.frameon", "figure.dpi", "savefig.dpi"} if document else set())
+    assert set(d) == attendu
+    lignes = [x for x in (DIST / nom).read_text(encoding="utf-8").splitlines() if x and not x.startswith("#")]
+    assert len(lignes) == len(d)  # aucune clé en double
+    assert d["savefig.bbox"] == "tight"
+    assert re.fullmatch(r"cycler\('color', \[('[0-9A-F]{6}'(, )?){8}\]\) \+ cycler\('linestyle', \[.*\]\) \+ cycler\('marker', \[.*\]\)",
+                        d["axes.prop_cycle"])
+    if document:
+        assert (d["axes.titlelocation"], d["legend.frameon"], d["figure.dpi"], d["savefig.dpi"]) == ("left", "False", "200", "200")

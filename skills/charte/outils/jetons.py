@@ -31,21 +31,27 @@ du fichier `ttf` fourni), à employer dans le thème Office et dans les document
 `PICTOGRAMME` : rôles de la tuile, des barres et du point du pictogramme, par thème (choisis par mesure,
 contrôlés par `contrastes.py`). Sur un aplat sombre, on prend toujours ceux du thème sombre.
 
+Un jeton peut être un alias DTCG (`"$value": "{theme.clair.couleur.primaire}"`) : `charger()` le résout.
+
 Couleurs opaques en `#RRGGBB` majuscules. Couleurs translucides (`voile`) en `rgba(...)` CSS.
 Ombres (`halo`) en valeur CSS `box-shadow`.
 """
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 CHEMIN = Path(__file__).resolve().parent.parent / "jetons" / "charte.tokens.json"
 THEMES = ("sombre", "clair")
 SERIES = ("cat", "seq", "div")  # groupes numérotés de couleurs
+# Décision d'Anaël du 2026-11-05 : tuile et point sont des jetons (`pictogramme-tuile`, `pictogramme-point`) ;
+# en clair, ils référencent `primaire` et `accent-aplat`.
 PICTOGRAMME = {
-    "sombre": {"tuile": "primaire", "barres": "sur-primaire", "point": "accent-doux"},
-    "clair": {"tuile": "primaire", "barres": "sur-primaire", "point": "accent-aplat"},
+    "sombre": {"tuile": "pictogramme-tuile", "barres": "sur-primaire", "point": "pictogramme-point"},
+    "clair": {"tuile": "pictogramme-tuile", "barres": "sur-primaire", "point": "pictogramme-point"},
 }
+ALIAS = re.compile(r"^\{([^{}]+)\}$")
 GENERIQUES = {"serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "ui-monospace",
               "ui-sans-serif", "ui-serif", "ui-rounded", "emoji", "math"}
 
@@ -89,13 +95,30 @@ def _valeurs(groupe: dict) -> dict:
     return {k: v["$value"] for k, v in groupe.items() if not k.startswith("$") and "$value" in v}
 
 
+def resoudre(brut: dict, valeur, profondeur: int = 0):
+    """Résout un alias DTCG (`"{theme.clair.couleur.primaire}"`) vers la `$value` visée, récursivement."""
+    m = ALIAS.match(valeur) if isinstance(valeur, str) else None
+    if not m:
+        return valeur
+    if profondeur > 8:
+        raise ValueError(f"alias en boucle : {valeur}")
+    noeud = brut
+    for cle in m.group(1).split("."):
+        if not isinstance(noeud, dict) or cle not in noeud:
+            raise ValueError(f"alias introuvable : {valeur}")
+        noeud = noeud[cle]
+    if "$value" not in noeud:
+        raise ValueError(f"alias sans valeur : {valeur}")
+    return resoudre(brut, noeud["$value"], profondeur + 1)
+
+
 def charger(chemin: str | Path | None = None) -> dict:
     brut = json.loads(Path(chemin or CHEMIN).read_text(encoding="utf-8"))
     meta = brut.get("$extensions", {}).get("charte", {})
     out: dict = {"version": meta.get("version"), "theme_par_defaut": meta.get("theme_par_defaut", "sombre")}
     for t in THEMES:
         groupe = brut["theme"][t]
-        couleurs: dict = {k: couleur_css(v) for k, v in _valeurs(groupe["couleur"]).items()}
+        couleurs: dict = {k: couleur_css(resoudre(brut, v)) for k, v in _valeurs(groupe["couleur"]).items()}
         for nom in SERIES:
             g = groupe["couleur"][nom]
             serie = [couleur_css(g[str(i)]["$value"]) for i in range(1, len(_valeurs(g)) + 1)]

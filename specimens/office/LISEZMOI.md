@@ -47,7 +47,7 @@ Repli si un lecteur ignore les polices incorporées : Segoe UI Semibold pour les
 
 ## Règles appliquées (v2.1)
 
-- Couverture et fin : pictogramme sombre (tuile `primaire` sombre, point `accent-doux`), filet or sombre `#E3C26B` sous le titre (filet épais : 10,35:1 sur l'aplat).
+- Couverture et fin : pictogramme sombre (`pictogramme-tuile` #3B6FD0, point `pictogramme-point` #F0D27A, décision d'Anaël du 2026-11-05), filet or sombre `#E3C26B` sous le titre (filet épais : 10,35:1 sur l'aplat).
 - Titres de diapositive à 28 pt, en `Sora SemiBold` sans gras synthétique.
 - Graphiques : 4 puis 6 séries au plus, étiquette de données (nom de la série) sur chaque barre.
 - Diapositive 5 : aplat d'or en `accent-aplat`, texte `texte`.
@@ -55,7 +55,6 @@ Repli si un lecteur ignore les polices incorporées : Segoe UI Semibold pour les
 
 ## Constats pour la critique
 
-- **Point du pictogramme en sombre** : `accent-doux` (`#3A3112`, 5,95:1 sur la tuile) se lit comme un or bruni, presque comme les barres. C'est la seule valeur de la charte qui tienne 3:1 sur la tuile sombre ; à revoir si l'on veut un point franchement or en sombre (décision d'identité).
 - **Graphiques natifs PowerPoint** : leur texte (axes, étiquettes, légende) sort en Arial dans le PDF, même avec la police nommée explicitement : le moteur de graphiques ne prend pas les polices incorporées.
 - **Glyphes hors du sous-ensemble latin** : `Δ` (tableau du rapport) et `▲` (encadré d'alerte) ne sont pas dans les `ttf` fournis ; Word les prend dans une police de repli (Cambria, Calibri, Times New Roman gras dans le PDF).
 - **Thème Office limité à six accents** : documenté (au plus six séries en diapositive).

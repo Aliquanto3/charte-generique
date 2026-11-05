@@ -36,3 +36,29 @@ def test_regles_v2_1_presentes():
     for seuil in ("au moins 28 pt", "six séries", "dès cinq séries", "dès deux séries en clair", "au-delà de quatre séries",
                   "au moins 64 px", "sous 28 px", "80 px", 'jamais `type="primary"`', "Segoe UI Semibold"):
         assert seuil.lower() in doc.lower(), seuil
+
+
+def _module(chemin, nom):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(nom, chemin)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def test_seuils_de_la_doc_egaux_aux_constantes():
+    """Les seuils chiffrés de la doc sont ceux qu'appliquent les spécimens (constantes du code)."""
+    racine = DOC.parent.parent
+    office = _module(racine / "specimens" / "office" / "construire.py", "construire_doc")
+    apercu = _module(racine / "specimens" / "readme" / "generer_bannieres.py", "bannieres_doc")
+    doc = DOC.read_text(encoding="utf-8").lower()
+    nombres = {2: "deux", 5: "cinq", 6: "six"}
+    assert f"titres d'au moins {office.TITRE_DIAPO_PT} pt" in doc
+    assert f"au plus {nombres[office.SERIES_DIAPO]} séries" in doc
+    assert f"étiquette de données dès {nombres[office.ETIQUETTE_DONNEES_DES]} séries" in doc
+    assert f"dès {nombres[office.ETIQUETTE_CLAIR_DES]} séries en clair" in doc
+    assert f"titre d'au moins {apercu.TITRE_APERCU_MIN} px" in doc
+    assert f"aucun texte sous {apercu.TEXTE_APERCU_MIN} px" in doc
+    assert f"marges sûres de {apercu.MARGE_APERCU} px" in doc
+    assert f"{apercu.APERCU[0]} × {apercu.APERCU[1]}" in doc
