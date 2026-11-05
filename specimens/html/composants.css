@@ -1,0 +1,108 @@
+/* Composants du spécimen : uniquement des variables de dist/charte.css. */
+@font-face { font-family: Sora; font-weight: 600; src: url("../../skills/charte/polices/sora-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible"; font-weight: 400; src: url("../../skills/charte/polices/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible"; font-weight: 700; src: url("../../skills/charte/polices/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 400; src: url("../../skills/charte/polices/jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
+
+* { box-sizing: border-box; }
+.page { max-width: 960px; margin: 0 auto; padding: var(--espacement-6) var(--espacement-5); }
+.entete { display: flex; align-items: center; justify-content: space-between; gap: var(--espacement-4); padding-bottom: var(--espacement-4); border-bottom: var(--trait-largeur) solid var(--trait); }
+.logotype { display: flex; align-items: center; gap: var(--espacement-2); font-family: var(--police-titres); font-weight: var(--graisse-titres); font-size: var(--taille-grand); color: var(--texte); }
+.section { margin-top: var(--espacement-7); break-inside: avoid-page; }
+.section > h2 { font-size: var(--taille-titre-3); margin: 0 0 var(--espacement-4); }
+.legende { font-size: var(--taille-legende); color: var(--texte-attenue); }
+.rangee { display: flex; flex-wrap: wrap; gap: var(--espacement-3); align-items: center; }
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--espacement-5); }
+
+.selecteur { display: flex; align-items: center; gap: var(--espacement-2); font-size: var(--taille-petit); color: var(--texte-attenue); }
+.selecteur select { font: var(--taille-petit) var(--police-texte); padding: var(--espacement-2) var(--espacement-3); background: var(--surface); color: var(--texte); border: var(--trait-largeur) solid var(--neutre); border-radius: var(--rayon-petit); }
+
+.titre-1 { font: var(--graisse-titres) var(--taille-titre-1)/1.2 var(--police-titres); margin: 0 0 var(--espacement-3); }
+.titre-2 { font: var(--graisse-titres) var(--taille-titre-2)/1.2 var(--police-titres); margin: 0 0 var(--espacement-3); }
+.titre-3 { font: var(--graisse-titres) var(--taille-titre-3)/1.2 var(--police-titres); margin: 0 0 var(--espacement-3); }
+.titre-4 { font: var(--graisse-titres) var(--taille-titre-4)/1.2 var(--police-titres); margin: 0 0 var(--espacement-3); }
+code { padding: 1px var(--espacement-1); border-radius: var(--rayon-petit); font-size: var(--taille-petit); }
+pre { padding: var(--espacement-4); border-radius: var(--rayon-grand); border: var(--trait-largeur) solid var(--trait); overflow-x: auto; font-size: var(--taille-petit); }
+pre code { padding: 0; }
+
+.bouton { font: 700 var(--taille-base)/1 var(--police-texte); padding: var(--espacement-3) var(--espacement-5); border-radius: var(--rayon-moyen); border: var(--trait-largeur) solid transparent; cursor: pointer; }
+.bouton-principal { background: var(--bouton); color: var(--sur-bouton); }
+.bouton-principal:hover { background: var(--bouton-survol); }
+.bouton-secondaire { background: var(--surface); color: var(--texte); border-color: var(--trait); }
+.bouton:disabled { background: var(--surface-alt); color: var(--texte-attenue); border-color: var(--trait); cursor: not-allowed; }
+
+.champ { display: flex; flex-direction: column; gap: var(--espacement-1); }
+.champ label { font-size: var(--taille-petit); font-weight: 700; }
+.champ input { font: var(--taille-base) var(--police-texte); padding: var(--espacement-3); background: var(--surface); color: var(--texte); border: var(--trait-largeur) solid var(--neutre); border-radius: var(--rayon-petit); }
+.champ-erreur input { border-color: var(--erreur); border-width: var(--focus-largeur); }
+.champ-erreur .message { color: var(--erreur); font-size: var(--taille-petit); }
+
+.pastille { display: inline-flex; align-items: center; gap: var(--espacement-1); padding: var(--espacement-1) var(--espacement-3); border-radius: var(--rayon-pilule); font-size: var(--taille-petit); font-weight: 700; background: color-mix(in srgb, var(--couleur) 13%, var(--surface)); color: var(--couleur); }
+.pastille-succes { --couleur: var(--succes); }
+.pastille-alerte { --couleur: var(--alerte-texte); }
+.pastille-erreur { --couleur: var(--erreur); }
+.pastille-accent { --couleur: var(--accent-texte); }
+.pastille-info { --couleur: var(--primaire); }
+
+.bandeau { padding: var(--espacement-3) var(--espacement-4); border-radius: var(--rayon-moyen); color: var(--texte); border-left: var(--espacement-1) solid var(--couleur); background: var(--fond-doux); margin-bottom: var(--espacement-2); }
+.bandeau-succes { --couleur: var(--succes); --fond-doux: var(--succes-doux); }
+.bandeau-alerte { --couleur: var(--alerte); --fond-doux: var(--alerte-doux); }
+.bandeau-erreur { --couleur: var(--erreur); --fond-doux: var(--erreur-doux); }
+.bandeau-accent { --couleur: var(--accent); --fond-doux: var(--accent-doux); }
+.bandeau-info { --couleur: var(--primaire); --fond-doux: var(--primaire-doux); }
+
+.carte { background: var(--surface); border: var(--trait-largeur) solid var(--trait); border-radius: var(--rayon-moyen); padding: var(--espacement-5); box-shadow: var(--halo); }
+.carte h3 { margin-top: 0; font-size: var(--taille-titre-4); }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: var(--espacement-3) var(--espacement-4); }
+th { border-bottom: var(--trait-largeur) solid var(--trait); font-family: var(--police-titres); font-weight: var(--graisse-titres); font-size: var(--taille-petit); }
+tbody tr:nth-child(even) { background: var(--surface-alt); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.scene-modale { position: relative; min-height: 280px; display: flex; align-items: center; justify-content: center; border-radius: var(--rayon-grand); overflow: hidden; background: var(--surface-alt); padding: var(--espacement-5); }
+.scene-modale .voile { position: absolute; inset: 0; background: var(--voile); }
+.modale { position: relative; width: min(420px, 100%); background: var(--surface); border-radius: var(--rayon-grand); padding: var(--espacement-5); box-shadow: var(--halo); border: var(--trait-largeur) solid var(--trait); }
+.modale h3 { margin: 0 0 var(--espacement-3); font-size: var(--taille-titre-4); }
+.modale .rangee { justify-content: flex-end; margin-top: var(--espacement-4); }
+
+.graphique { width: 100%; height: auto; }
+.graphique text { font-family: var(--police-texte); font-size: var(--taille-legende); fill: var(--texte-attenue); stroke: none; }
+.graphique .axe { stroke: var(--trait); stroke-width: var(--trait-largeur); fill: none; }
+.graphique text.valeur { fill: var(--texte); font-weight: 700; }
+.graphique .ligne { fill: none; stroke-width: var(--focus-largeur); stroke-linecap: round; stroke-linejoin: round; }
+.graphique rect.c1, .graphique rect.c2, .graphique rect.c3, .graphique rect.c4 { stroke: none; }
+.graphique .c1 { fill: var(--cat-1); stroke: var(--cat-1); }
+.graphique .c2 { fill: var(--cat-2); stroke: var(--cat-2); }
+.graphique .c3 { fill: var(--cat-3); stroke: var(--cat-3); }
+.graphique .c4 { fill: var(--cat-4); stroke: var(--cat-4); }
+.graphique .c5 { fill: var(--cat-5); stroke: var(--cat-5); }
+.graphique .c6 { fill: var(--cat-6); stroke: var(--cat-6); }
+.graphique .c7 { fill: var(--cat-7); stroke: var(--cat-7); }
+.graphique .c8 { fill: var(--cat-8); stroke: var(--cat-8); }
+.graphique .ligne { fill: none; }
+.graphique text[class^="c"] { stroke: none; font-weight: 700; }
+
+.nuancier { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--espacement-3); }
+.echantillon { border: var(--trait-largeur) solid var(--trait); border-radius: var(--rayon-moyen); overflow: hidden; background: var(--surface); font-size: var(--taille-legende); }
+.echantillon .pastille-couleur { height: 48px; background: var(--c); border-bottom: var(--trait-largeur) solid var(--trait); }
+.echantillon span { display: block; padding: var(--espacement-1) var(--espacement-2); font-family: var(--police-code); }
+
+@media print {
+  @page { size: A4; margin: 18mm 15mm; }
+  html { font-size: 11pt; }
+  body { background: none; color: var(--texte); }
+  .page { max-width: none; padding: 0; }
+  .selecteur { display: none; }
+  .carte, .modale, .echantillon, pre { background: none; box-shadow: none; }
+  .scene-modale { background: none; border: var(--trait-largeur) solid var(--trait); }
+  .scene-modale .voile { display: none; }
+  .bouton-principal { background: none; color: var(--texte); border: var(--focus-largeur) solid var(--texte); }
+  .bandeau, .pastille { background: none; }
+  .pastille { border: var(--trait-largeur) solid var(--couleur); }
+  .bandeau { border: var(--trait-largeur) solid var(--trait); border-left: var(--espacement-1) solid var(--couleur); }
+  tbody tr:nth-child(even) { background: none; border-top: var(--trait-largeur) solid var(--trait); border-bottom: var(--trait-largeur) solid var(--trait); }
+  .echantillon .pastille-couleur, .graphique * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: var(--taille-legende); color: var(--texte-attenue); word-break: break-all; }
+  .section { margin-top: var(--espacement-6); }
+}

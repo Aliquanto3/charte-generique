@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spécimen de la charte générique</title>
+<link rel="stylesheet" href="../../skills/charte/dist/charte.css">
+<link rel="stylesheet" href="../../skills/charte/dist/charte-base.css">
+<link rel="stylesheet" href="composants.css">
+<style>
+  html.gris { filter: grayscale(1); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="entete">
+  <div class="logotype">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
+      <rect width="32" height="32" rx="8" fill="var(--primaire)"/>
+      <path d="M9 10h14M9 16h9M9 22h14" fill="none" stroke="var(--sur-primaire)" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="23" cy="16" r="2.5" fill="var(--accent)"/>
+    </svg>
+    <span>Charte</span>
+  </div>
+  <div class="selecteur">
+    <label for="theme">Thème</label>
+    <select id="theme">
+      <option value="sombre">Sombre</option>
+      <option value="clair">Clair</option>
+    </select>
+  </div>
+</header>
+
+<main>
+<section class="section" id="typo">
+  <h2>Typographie</h2>
+  <p class="titre-1">Titre 1 · 48 px</p>
+  <p class="titre-2">Titre 2 · 36 px</p>
+  <p class="titre-3">Titre 3 · 28 px</p>
+  <p class="titre-4">Titre 4 · 22 px</p>
+  <p>Un paragraphe de texte courant en Atkinson Hyperlegible, lisible avant tout. Les liens restent soulignés, comme <a href="https://example.org/charte">ce lien d'exemple</a>, et le code en ligne s'écrit <code>var(--primaire)</code>.</p>
+  <pre><code>:root {
+  --fond: var(--surface);
+  color: var(--texte);
+}</code></pre>
+</section>
+
+<section class="section" id="boutons">
+  <h2>Boutons</h2>
+  <div class="rangee">
+    <button class="bouton bouton-principal" type="button">Principal</button>
+    <button class="bouton bouton-secondaire" type="button">Secondaire</button>
+    <button class="bouton bouton-principal" type="button" disabled>Désactivé</button>
+    <button class="bouton bouton-secondaire" type="button" id="focus-demo">Focus visible</button>
+  </div>
+  <p class="legende">Le dernier bouton est focalisé au chargement : anneau de 2 px, décalé de 2 px.</p>
+</section>
+
+<section class="section" id="champs">
+  <h2>Champs de formulaire</h2>
+  <div class="grille">
+    <div class="champ">
+      <label for="nom">Nom du projet</label>
+      <input id="nom" type="text" value="Atlas">
+    </div>
+    <div class="champ champ-erreur">
+      <label for="courriel">Courriel</label>
+      <input id="courriel" type="email" value="anael@" aria-invalid="true" aria-describedby="err-courriel">
+      <span class="message" id="err-courriel">⚠ Adresse incomplète : ajoutez le domaine.</span>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="statuts">
+  <h2>Pastilles et bandeaux</h2>
+  <div class="rangee">
+    <span class="pastille pastille-succes">✓ Succès</span>
+    <span class="pastille pastille-alerte">▲ Alerte</span>
+    <span class="pastille pastille-erreur">✕ Erreur</span>
+    <span class="pastille pastille-accent">★ Accent</span>
+    <span class="pastille pastille-info">ℹ Info</span>
+  </div>
+  <div style="margin-top: var(--espacement-4)">
+    <div class="bandeau bandeau-succes"><strong>Succès.</strong> Les modifications sont enregistrées.</div>
+    <div class="bandeau bandeau-alerte"><strong>Alerte.</strong> Le quota approche de sa limite.</div>
+    <div class="bandeau bandeau-erreur"><strong>Erreur.</strong> L'envoi a échoué, réessayez.</div>
+    <div class="bandeau bandeau-accent"><strong>Nouveau.</strong> Le thème clair est disponible.</div>
+    <div class="bandeau bandeau-info"><strong>Info.</strong> La synchronisation a lieu chaque nuit.</div>
+  </div>
+</section>
+
+<section class="section" id="carte">
+  <h2>Carte</h2>
+  <div class="grille">
+    <article class="carte">
+      <h3>Rapport mensuel</h3>
+      <p>Une carte sur <code>surface</code>, avec bordure <code>trait</code> et ombre douce <code>halo</code>.</p>
+      <button class="bouton bouton-secondaire" type="button">Ouvrir</button>
+    </article>
+  </div>
+</section>
+
+<section class="section" id="tableau">
+  <h2>Tableau rayé</h2>
+  <table>
+    <thead><tr><th>Région</th><th>Statut</th><th class="num">Ventes</th></tr></thead>
+    <tbody>
+      <tr><td>Nord</td><td><span class="pastille pastille-succes">✓ Atteint</span></td><td class="num">1 240</td></tr>
+      <tr><td>Sud</td><td><span class="pastille pastille-alerte">▲ Proche</span></td><td class="num">980</td></tr>
+      <tr><td>Est</td><td><span class="pastille pastille-erreur">✕ Manqué</span></td><td class="num">610</td></tr>
+      <tr><td>Ouest</td><td><span class="pastille pastille-succes">✓ Atteint</span></td><td class="num">1 105</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section" id="modale">
+  <h2>Modale sur voile</h2>
+  <div class="scene-modale">
+    <div class="voile"></div>
+    <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titre-modale">
+      <h3 id="titre-modale">Supprimer le rapport ?</h3>
+      <p>Cette action est définitive. Le rapport ne pourra pas être restauré.</p>
+      <div class="rangee">
+        <button class="bouton bouton-secondaire" type="button">Annuler</button>
+        <button class="bouton bouton-principal" type="button">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="graphiques">
+  <h2>Graphiques</h2>
+  <div class="grille">
+    <figure style="margin: 0">
+      <svg class="graphique" viewBox="0 0 320 240" role="img" aria-label="Barres : quatre séries, valeurs 62, 48, 35 et 20">
+        <line class="axe" x1="30" y1="200" x2="310" y2="200"/>
+        <rect class="c1" x="45" y="52" width="48" height="148" rx="6"/><text class="valeur" x="69" y="44" text-anchor="middle">62</text><text x="69" y="218" text-anchor="middle">Série 1</text>
+        <rect class="c2" x="118" y="85" width="48" height="115" rx="6"/><text class="valeur" x="142" y="77" text-anchor="middle">48</text><text x="142" y="218" text-anchor="middle">Série 2</text>
+        <rect class="c3" x="191" y="116" width="48" height="84" rx="6"/><text class="valeur" x="215" y="108" text-anchor="middle">35</text><text x="215" y="218" text-anchor="middle">Série 3</text>
+        <rect class="c4" x="264" y="152" width="48" height="48" rx="6"/><text class="valeur" x="288" y="144" text-anchor="middle">20</text><text x="288" y="218" text-anchor="middle">Série 4</text>
+      </svg>
+      <figcaption class="legende">Barres sur cat-1 à cat-4, valeur écrite au-dessus de chaque barre.</figcaption>
+    </figure>
+    <figure style="margin: 0; grid-column: 1 / -1">
+      <svg class="graphique" viewBox="0 0 560 280" role="img" aria-label="Lignes : huit séries, légende directe à droite">
+        <line class="axe" x1="30" y1="265" x2="450" y2="265"/>
+        <polyline class="ligne c1" points="40,60 140,50 240,40 340,35 440,30"/><text class="c1" x="450" y="34">Série 1</text>
+        <polyline class="ligne c2" points="40,90 140,85 240,70 340,65 440,55"/><text class="c2" x="450" y="59">Série 2</text>
+        <polyline class="ligne c3" points="40,120 140,110 240,100 340,85 440,80"/><text class="c3" x="450" y="84">Série 3</text>
+        <polyline class="ligne c4" points="40,150 140,140 240,125 340,115 440,105"/><text class="c4" x="450" y="109">Série 4</text>
+        <polyline class="ligne c5" points="40,180 140,165 240,150 340,140 440,130"/><text class="c5" x="450" y="134">Série 5</text>
+        <polyline class="ligne c6" points="40,200 140,190 240,180 340,165 440,155"/><text class="c6" x="450" y="159">Série 6</text>
+        <polyline class="ligne c7" points="40,225 140,215 240,200 340,190 440,180"/><text class="c7" x="450" y="184">Série 7</text>
+        <polyline class="ligne c8" points="40,250 140,240 240,230 340,215 440,205"/><text class="c8" x="450" y="209">Série 8</text>
+      </svg>
+      <figcaption class="legende">Lignes sur cat-1 à cat-8, légende directe au bout de chaque ligne.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section" id="nuancier">
+  <h2>Nuancier des rôles</h2>
+  <div class="nuancier">
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--fond)"></div><span>fond</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--surface)"></div><span>surface</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--surface-alt)"></div><span>surface-alt</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--trait)"></div><span>trait</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--texte)"></div><span>texte</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--texte-attenue)"></div><span>texte-attenue</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--neutre)"></div><span>neutre</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--primaire)"></div><span>primaire</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--primaire-vif)"></div><span>primaire-vif</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--primaire-doux)"></div><span>primaire-doux</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--sur-primaire)"></div><span>sur-primaire</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--bouton)"></div><span>bouton</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--bouton-survol)"></div><span>bouton-survol</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--sur-bouton)"></div><span>sur-bouton</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--accent)"></div><span>accent</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--accent-texte)"></div><span>accent-texte</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--accent-doux)"></div><span>accent-doux</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--succes)"></div><span>succes</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--succes-doux)"></div><span>succes-doux</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--alerte)"></div><span>alerte</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--alerte-texte)"></div><span>alerte-texte</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--alerte-doux)"></div><span>alerte-doux</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--erreur)"></div><span>erreur</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--erreur-doux)"></div><span>erreur-doux</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--focus)"></div><span>focus</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--texte-sur-vif)"></div><span>texte-sur-vif</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--sur-statut)"></div><span>sur-statut</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--encre-pleine)"></div><span>encre-pleine</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--sur-encre)"></div><span>sur-encre</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--sur-encre-attenue)"></div><span>sur-encre-attenue</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--voile)"></div><span>voile</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-1)"></div><span>cat-1</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-2)"></div><span>cat-2</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-3)"></div><span>cat-3</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-4)"></div><span>cat-4</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-5)"></div><span>cat-5</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-6)"></div><span>cat-6</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-7)"></div><span>cat-7</span></div>
+    <div class="echantillon"><div class="pastille-couleur" style="--c: var(--cat-8)"></div><span>cat-8</span></div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+  // Paramètres d'URL : ?theme=clair|sombre et &gris=1 (utilisés par rendre.py).
+  const params = new URLSearchParams(location.search);
+  const theme = params.get("theme") || "sombre";
+  document.documentElement.dataset.theme = theme;
+  if (params.get("gris")) document.documentElement.classList.add("gris");
+  const choix = document.getElementById("theme");
+  choix.value = theme;
+  choix.addEventListener("change", () => { document.documentElement.dataset.theme = choix.value; });
+  if (!params.get("nofocus")) document.getElementById("focus-demo").focus();
+</script>
+</body>
+</html>
