@@ -1,0 +1,23 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "background": "#F6F8FB",
+    "primaryColor": "#ECF0F5",
+    "primaryTextColor": "#121821",
+    "primaryBorderColor": "#1D5BC2",
+    "lineColor": "#4F5A68",
+    "secondaryColor": "#FFFFFF",
+    "tertiaryColor": "#E1EAFA",
+    "fontFamily": "'Atkinson Hyperlegible', system-ui, 'Segoe UI', Roboto, sans-serif",
+    "noteBkgColor": "#FBF1D6",
+    "noteTextColor": "#121821",
+    "cScale0": "#1D5BC2",
+    "cScale1": "#A87A00",
+    "cScale2": "#1F8155",
+    "cScale3": "#C24D1B",
+    "cScale4": "#B83A75",
+    "cScale5": "#0E7C8C",
+    "cScale6": "#6F7378",
+    "cScale7": "#8A5A2B"
+  }
+}

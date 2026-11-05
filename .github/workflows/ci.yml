@@ -33,3 +33,5 @@ jobs:
         run: uv run --group dev pytest
       - name: Contrastes de la charte
         run: uv run --no-project python -I skills/charte/outils/contrastes.py
+      - name: dist/ à jour
+        run: uv run --no-project python -I skills/charte/generer.py --verifier

@@ -1,0 +1,24 @@
+# Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.0.0).
+axes.prop_cycle: cycler('color', ['1D5BC2', 'A87A00', '1F8155', 'C24D1B', 'B83A75', '0E7C8C', '6F7378', '8A5A2B'])
+figure.facecolor: F6F8FB
+figure.edgecolor: F6F8FB
+savefig.facecolor: F6F8FB
+axes.facecolor: FFFFFF
+axes.edgecolor: CED5DF
+axes.labelcolor: 121821
+axes.titlecolor: 121821
+axes.spines.top: False
+axes.spines.right: False
+axes.grid: True
+grid.color: CED5DF
+grid.linewidth: 1
+axes.axisbelow: True
+text.color: 121821
+xtick.color: 4F5A68
+ytick.color: 4F5A68
+font.family: Atkinson Hyperlegible, Segoe UI, Roboto, sans-serif
+font.size: 14
+axes.titlesize: 18
+legend.facecolor: FFFFFF
+legend.edgecolor: CED5DF
+legend.labelcolor: 121821
