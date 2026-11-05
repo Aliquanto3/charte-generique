@@ -66,16 +66,47 @@ def test_theme_porte_les_jetons_clairs(paquets, indice, partie):
     assert polices.find(f"{A}minorFont/{A}latin").get("typeface") == "Atkinson Hyperlegible"
 
 
-def test_aucune_couleur_hors_jetons(paquets):
+def _autorisees():
     j = charger()
-    autorisees = {v.lstrip("#").upper() for t in ("clair", "sombre") for v in j[t].values() if isinstance(v, str) and v.startswith("#")}
+    return {v.lstrip("#").upper() for t in ("clair", "sombre") for v in j[t].values() if isinstance(v, str) and v.startswith("#")}
+
+
+COULEUR = r'(?:srgbClr val|w:color|w:fill)="([0-9A-Fa-f]{6})"'
+
+
+@pytest.mark.parametrize("indice,parties", [
+    (0, r"ppt/(slides/slide\d+|slideMasters/slideMaster\d+|slideLayouts/slideLayout\d+|charts/chart\d+)\.xml"),
+    (1, r"word/(document|footer\d+|header\d+)\.xml"),
+])
+def test_aucune_couleur_hors_jetons(paquets, indice, parties):
     trouvees = set()
-    with zipfile.ZipFile(paquets[0]) as z:
+    with zipfile.ZipFile(paquets[indice]) as z:
         for nom in z.namelist():
-            if re.fullmatch(r"ppt/(slides/slide\d+|charts/chart\d+)\.xml", nom):
-                trouvees |= {m.upper() for m in re.findall(r'srgbClr val="([0-9A-Fa-f]{6})"', z.read(nom).decode("utf-8"))}
+            if re.fullmatch(parties, nom):
+                trouvees |= {m.upper() for m in re.findall(COULEUR, z.read(nom).decode("utf-8"))}
     assert trouvees, "aucune couleur trouvée : le test ne lit rien"
-    assert trouvees <= autorisees, f"couleurs hors jetons : {sorted(trouvees - autorisees)}"
+    assert trouvees <= _autorisees(), f"couleurs hors jetons : {sorted(trouvees - _autorisees())}"
+
+
+def test_styles_utilises_du_rapport_en_jetons(paquets):
+    """Les styles du modèle python-docx non employés gardent leurs couleurs ; ceux du rapport doivent être en jetons."""
+    from docx import Document
+
+    d = Document(paquets[1])
+    for nom in ("Normal", "Title", "Heading 1", "Heading 2", "Heading 3"):
+        assert str(d.styles[nom].font.color.rgb) in _autorisees(), nom
+    tailles = [d.styles[n].font.size.pt for n in ("Title", "Heading 1", "Heading 2", "Heading 3", "Normal")]
+    assert tailles == sorted(tailles, reverse=True) and len(set(tailles)) == 5, tailles
+    assert tailles[3] >= tailles[4] * 1.3, "Titre 3 trop proche du corps"
+
+
+def test_ordre_tcpr_conforme_au_schema(paquets):
+    """CT_TcPr impose tcBorders avant shd : sinon Word peut demander une réparation."""
+    with zipfile.ZipFile(paquets[1]) as z:
+        xml = z.read("word/document.xml").decode("utf-8")
+    for tcpr in re.findall(r"<w:tcPr>.*?</w:tcPr>", xml):
+        if "<w:tcBorders" in tcpr and "<w:shd" in tcpr:
+            assert tcpr.index("<w:tcBorders") < tcpr.index("<w:shd"), tcpr
 
 
 def test_rapport_styles_et_pied(paquets):

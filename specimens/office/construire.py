@@ -15,6 +15,8 @@ RACINE = Path(__file__).resolve().parents[2]
 CHARTE = RACINE / "skills" / "charte"
 sys.path.insert(0, str(CHARTE / "outils"))
 
+from contrastes import PAIRES, PASTILLES, TAUX_PASTILLE  # noqa: E402
+from couleurs import contraste, ecart_minimal, melange  # noqa: E402
 from jetons import charger  # noqa: E402
 
 SORTIE = Path(__file__).resolve().parent / "sortie"
@@ -33,6 +35,21 @@ def rgb(hexa: str):
 
 def pt(px: float) -> float:
     return px * 0.75
+
+
+def mesures(theme: str) -> dict[str, float]:
+    """Mesures réelles de la charte, recalculées depuis les jetons (aucun chiffre écrit à la main)."""
+    t = J[theme]
+    return {
+        "texte": min([contraste(t[a], t[b]) for a, b, seuil, _ in PAIRES if seuil == 4.5]
+                     + [contraste(t[k], melange(t[k], t["surface"], TAUX_PASTILLE)) for k in PASTILLES]),
+        "non-texte": min(contraste(t[a], t[b]) for a, b, seuil, _ in PAIRES if seuil == 3.0),
+        "series": ecart_minimal(t["cat"])[0],
+    }
+
+
+def virgule(x: float, n: int = 2) -> str:
+    return f"{x:.{n}f}".replace(".", ",")
 
 
 def remplacer_theme(chemin: Path, partie: str) -> None:
@@ -175,8 +192,8 @@ def deck(chemin: Path) -> None:
     s = prs.slides.add_slide(vide)
     fond(s, C["fond"])
     aplat(s, MSO_SHAPE.RECTANGLE, 0, 0, Inches(6.2), H, C["accent"])
-    texte(s, Inches(0.6), Inches(1.5), Inches(5.2), Inches(2.6), "4,5:1", 96, C["sur-statut"], TITRES, ancre=MSO_ANCHOR.MIDDLE)
-    texte(s, Inches(0.6), Inches(4.2), Inches(5.2), Inches(1.4), "contraste minimal du texte, mesuré sur chaque paire", pt(J["taille"]["titre-4"]), C["sur-statut"])
+    texte(s, Inches(0.6), Inches(1.5), Inches(5.2), Inches(2.6), virgule(mesures("clair")["texte"]) + ":1", 80, C["sur-statut"], TITRES, ancre=MSO_ANCHOR.MIDDLE)
+    texte(s, Inches(0.6), Inches(4.2), Inches(5.2), Inches(1.4), "contraste minimal du texte en thème clair, calculé sur les paires de la charte (seuil 4,5:1)", pt(J["taille"]["titre-4"]), C["sur-statut"])
     texte(s, Inches(6.9), Inches(2.0), Inches(5.7), Inches(3.4), "« Un seul geste fort par écran. »", pt(J["taille"]["titre-3"]) * 1.2, C["texte"], TITRES, ancre=MSO_ANCHOR.MIDDLE)
     texte(s, Inches(6.9), Inches(5.4), Inches(5.7), Inches(0.6), "Principe n° 4 de la charte", pt(J["taille"]["base"]), C["texte-attenue"])
 
@@ -243,7 +260,12 @@ def rapport(chemin: Path, png: Path) -> None:
         shd.set(qn("w:val"), "clear")
         shd.set(qn("w:color"), "auto")
         shd.set(qn("w:fill"), fond_hex.lstrip("#"))
-        cell._tc.get_or_add_tcPr().append(shd)
+        tcpr = cell._tc.get_or_add_tcPr()
+        bords = tcpr.find(qn("w:tcBorders"))
+        if bords is not None:  # ordre du schéma CT_TcPr : tcW, …, tcBorders, shd, …
+            bords.addnext(shd)
+        else:
+            tcpr.append(shd)
 
     def bordure(cell, cotes):
         b = OxmlElement("w:tcBorders")
@@ -253,7 +275,12 @@ def rapport(chemin: Path, png: Path) -> None:
             e.set(qn("w:sz"), str(taille))
             e.set(qn("w:color"), couleur.lstrip("#"))
             b.append(e)
-        cell._tc.get_or_add_tcPr().append(b)
+        tcpr = cell._tc.get_or_add_tcPr()
+        shd = tcpr.find(qn("w:shd"))
+        if shd is not None:
+            shd.addprevious(b)
+        else:
+            tcpr.append(b)
 
     d = Document()
     sec = d.sections[0]
@@ -261,11 +288,12 @@ def rapport(chemin: Path, png: Path) -> None:
     sec.left_margin = sec.right_margin = Cm(2.3)
     sec.top_margin = sec.bottom_margin = Cm(2.2)
     st = d.styles
-    fonte(st["Normal"], "Atkinson Hyperlegible", 11, C["texte"])
+    papier = 11 / pt(J["taille"]["base"])  # une seule échelle papier : `base` à 11 pt, rapports des jetons conservés
+    fonte(st["Normal"], "Atkinson Hyperlegible", pt(J["taille"]["base"]) * papier, C["texte"])
     st["Normal"].paragraph_format.space_after = Pt(8)
     st["Normal"].paragraph_format.line_spacing = 1.35
     for nom, taille in (("Title", J["taille"]["titre-1"]), ("Heading 1", J["taille"]["titre-2"]), ("Heading 2", J["taille"]["titre-3"]), ("Heading 3", J["taille"]["titre-4"])):
-        fonte(st[nom], "Sora", pt(taille) * 0.75, C["texte"] if nom != "Heading 3" else C["primaire-vif"])
+        fonte(st[nom], "Sora", round(pt(taille) * papier * 2) / 2, C["texte"] if nom != "Heading 3" else C["primaire-vif"])
         st[nom].paragraph_format.space_before = Pt(14)
         st[nom].paragraph_format.space_after = Pt(6)
     ppr = st["Title"].element.find(qn("w:pPr"))
@@ -290,7 +318,11 @@ def rapport(chemin: Path, png: Path) -> None:
     leg.runs[0].font.size, leg.runs[0].font.color.rgb = Pt(10), rvb(C["texte-attenue"])
     leg.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    lignes = [("Indicateur", "T1", "T2", "Évolution"), ("Contraste minimal", "4,6", "4,8", "+0,2"), ("Couleurs en dur", "3", "0", "-3"), ("Sorties générées", "9", "14", "+5")]
+    mc, ms = mesures("clair"), mesures("sombre")
+    lignes = [("Mesure (calculée depuis les jetons)", "Clair", "Sombre", "Seuil"),
+              ("Contraste minimal du texte", virgule(mc["texte"]) + ":1", virgule(ms["texte"]) + ":1", "4,5:1"),
+              ("Contraste minimal non textuel", virgule(mc["non-texte"]) + ":1", virgule(ms["non-texte"]) + ":1", "3:1"),
+              ("Écart minimal entre séries (ΔE00)", virgule(mc["series"], 1), virgule(ms["series"], 1), "10")]
     t = d.add_table(rows=len(lignes), cols=4)
     for ri, ligne in enumerate(lignes):
         for ci, val in enumerate(ligne):
