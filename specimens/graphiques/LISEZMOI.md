@@ -48,7 +48,7 @@ Les séries 5 à 8 restent proches en dyschromatopsie (4,0 à 4,6) : c'est pourq
 
 ## Constats pour la critique
 
-- **Couleurs Streamlit hors jetons** : `st.success` (texte `#5CE488` sur `#183A29`) et le code en ligne gardent les couleurs propres de Streamlit ; le thème 1.66 n'a pas de clé pour elles. Les champs n'ont pas de contour visible (option `showWidgetBorder` non posée).
+- **Couleurs Streamlit hors jetons** : `st.success` (vert néon sur vert sombre) et le code en ligne gardent les couleurs propres de Streamlit ; le thème 1.66 n'a pas de clé pour elles. Les champs n'ont pas de contour visible (option `showWidgetBorder` non posée).
 - **Polices** : matplotlib charge Atkinson et Sora par `addfont` (avertissement `findfont` pour `Roboto`, absente) ; plotly et Streamlit rendent en repli (Segoe UI), faute de polices installées.
 - **Streamlit** : l'en-tête (`Deploy`, menu) n'est pas thémé ; `st.bar_chart` ne prend ni hachures ni étiquettes directes.
 - **Étiquettes de nuage** : placées au-dessus de chaque groupe, elles peuvent toucher un point d'un autre groupe quand les nuages se recouvrent.
