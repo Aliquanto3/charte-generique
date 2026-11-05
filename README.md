@@ -7,7 +7,7 @@ Charte graphique générique, sombre d'abord, pour des applications web, des rap
 - **Jetons** : [`skills/charte/jetons/charte.tokens.json`](skills/charte/jetons/charte.tokens.json), au format DTCG 2025.10, source unique de toutes les valeurs.
 - **Charte lisible** : [`docs/CHARTE.md`](docs/CHARTE.md) (rôles, règles d'usage, typographie, formes, pictogramme).
 - **Fichiers prêts à l'emploi** : [`skills/charte/dist/`](skills/charte/dist/) (CSS, Python, matplotlib, plotly, Streamlit, mermaid, Office, SVG), généré par `uv run --no-project python -I skills/charte/generer.py` (`--verifier` en CI).
-- **Contrôles** : contrastes WCAG 2.1 et distinction des séries de graphique.
+- **Contrôles** : contrastes WCAG 2.1 et distinction des séries de graphique en vision normale.
 
   ```sh
   uv run --no-project python -I skills/charte/outils/contrastes.py

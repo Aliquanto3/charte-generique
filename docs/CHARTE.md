@@ -4,7 +4,7 @@ Charte graphique commune à des applications web, des rapports, des présentatio
 
 - **Sombre d'abord** : le thème sombre est le thème par défaut, et un thème clair le complète.
 - **Source unique des valeurs** : [`skills/charte/jetons/charte.tokens.json`](../skills/charte/jetons/charte.tokens.json), au format DTCG 2025.10. Ce document décrit les rôles et les règles. Les tables ci-dessous sont comparées aux jetons par `tests/test_doc.py`.
-- **Contrôle** : la commande ci-dessous vérifie les contrastes WCAG 2.1, les pastilles de statut et la distinction des séries de graphique. Elle doit afficher `Échecs : 0`.
+- **Contrôle** : la commande ci-dessous vérifie les contrastes WCAG 2.1, les pastilles de statut et la distinction des séries de graphique en vision normale (les dyschromatopsies sont mesurées à part). Elle doit afficher `Échecs : 0`.
 
   ```sh
   uv run --no-project python -I skills/charte/outils/contrastes.py
