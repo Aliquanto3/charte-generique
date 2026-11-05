@@ -90,14 +90,18 @@ Gravité : 3 bloquants, 8 importants, 10 mineurs.
 - Ce qu'on voit : un dégradé bleu fabriqué dans le spécimen. Sa valeur basse se fond dans le fond de la figure.
 - Mesure : bas de l'échelle `#E7ECF4`, soit 1,12:1 sur `fond` et 1,19:1 sur `surface`.
 - Règle : il n'en existe pas ; c'est un point ouvert de la charte.
-- Correction (A6) : six jetons `seq-1` à `seq-6`, mélanges sRGB de `primaire` avec `surface` (20, 40, 60, 80 et 100 %), plus un pas foncé :
+- Correction (A6) : cinq jetons `seq-1` à `seq-5`, mélanges sRGB de `primaire` avec `surface` (20, 40, 60, 80 et 100 %) :
 
   | Thème | Pas | Contraste sur `surface` | ΔE entre pas (normale) | ΔE entre pas (deutéranopie) |
   |---|---|---|---|---|
-  | clair | `#D2DEF3` `#A5BDE7` `#779DDA` `#4A7CCE` `#1D5BC2` `#144290` | 1,36 → 9,49 | 9,8 à 11,7 | 9,7 à 12,1 |
-  | sombre | `#2E394D` `#465777` `#5D74A2` `#7592CC` `#8DB0F7` `#B4CCFA` | 1,49 → 10,67 | 8,3 à 11,4 | 9,2 à 11,4 |
+  | clair | `#D2DEF3` `#A5BDE7` `#779DDA` `#4A7CCE` `#1D5BC2` | 1,36 / 1,90 / 2,76 / 4,15 / 6,31 | 10,2 à 11,7 | 10,7 à 12,1 |
+  | sombre | `#2E394D` `#465777` `#5D74A2` `#7592CC` `#8DB0F7` | 1,49 / 2,38 / 3,69 / 5,55 / 7,98 | 9,4 à 11,4 | 9,6 à 11,4 |
 
-  Une palette divergente reste à faire, sur le même principe : `primaire` d'un côté, `cat-4` de l'autre.
+  Les pas bas sont sous 3:1 sur `surface` : en clair `seq-1` à `seq-3`, en sombre `seq-1` et `seq-2`. Cette palette sert donc aux **aplats contigus** (carte de chaleur, choroplèthe), jamais à des séries isolées, qui gardent `cat-*`. Règles d'accompagnement :
+  - une légende graduée, ou la valeur écrite dans chaque cellule ;
+  - une cellule isolée dans un pas bas porte une bordure `trait-fort` (A5).
+
+  Une 6ᵉ étape plus foncée en clair a été écartée : la candidate `#144290` est trop proche d'une couleur de la liste locale à éviter (ΔE 14,8), et `primaire-vif` `#164A9E` n'est qu'à ΔE 6,9 de `seq-5`. Une palette divergente reste à faire, sur le même principe : `primaire` d'un côté, le corail (`cat-5` après A1) de l'autre.
 
 **I5. La règle « au-delà de quatre séries » n'est appliquée par aucun gabarit.**
 - Supports :
@@ -136,7 +140,7 @@ Gravité : 3 bloquants, 8 importants, 10 mineurs.
 - Mesure : `surface` sombre `#161B22` est aussi la surface du thème sombre de GitHub. `primaire` : L* 72, C* 40, h 279° en sombre ; L* 41, C* 62, h 289° en clair.
 - Règle : aucune règle d'identité (signature, usages du filet or).
 - Correction :
-  - (A9) faire du **filet or sous le titre** une règle de tous les supports : couverture de deck, titre de rapport, bannière, aperçu social, première page web. C'est l'élément le plus reconnaissable des rendus.
+  - (B5) faire du **filet or sous le titre** une règle de tous les supports : couverture de deck, titre de rapport, bannière, aperçu social, première page web. C'est l'élément le plus reconnaissable des rendus, mais il change la signature : décision d'Anaël.
   - (B1) et (B3) pour la teinte et les polices.
 
 ### Mineurs
@@ -163,7 +167,7 @@ Gravité : 3 bloquants, 8 importants, 10 mineurs.
 **m4. Badges du README sombre : l'étiquette disparaît.**
 - Support : `readme-sombre.png`.
 - Mesure : la moitié gauche du badge, `#121821`, sur la page `#0F1318` : 1,05:1. Le badge perd sa forme.
-- Correction : étiquette en `#4F5A68`, qui porte le blanc à 7,01:1 et se détache de la page sombre à 2,66:1.
+- Correction : une seule étiquette `#646E7B`, valable dans les deux thèmes. Elle porte le blanc à 5,17:1 et se détache à 3,60:1 de la page sombre et à 4,86:1 de la page claire. Pas besoin de `<picture>`. `#4F5A68` (`texte-attenue` clair) ne suffit pas : 2,66:1 sur la page sombre. `neutre` clair `#6E7886` non plus : 4,47:1 avec le blanc.
 
 **m5. Aperçu social vide à droite.**
 - Support : `apercu-social.png`.
@@ -210,17 +214,20 @@ Gravité : 3 bloquants, 8 importants, 10 mineurs.
 | # | Correction | Mesure attendue |
 |---|---|---|
 | A1 | Permuter `cat-4` (corail) et `cat-5` (framboise) dans les deux thèmes | séries 1 à 4, pire paire en deutéranopie : 4,4 → 9,9 en clair, 5,9 → 13,7 en sombre |
-| A2 | Étiquette directe obligatoire dans les gabarits dès deux séries en clair, avec anti-chevauchement ; cycle de tirets et de marqueurs dans mpl et plotly | pas de chevauchement dans `mpl-lignes-*` |
-| A3 | Thème Office : documenter le repli explicite (Segoe UI Semibold pour les titres, Segoe UI pour le texte) tant que les polices ne sont pas incorporées ; titres en gras forcé dans les gabarits | plus d'empattements dans Word |
+| A2 | Appliquer dans les gabarits les règles existantes : étiquette directe au-delà de quatre séries, et dès deux séries en clair (la charte le prescrit déjà : « en clair, les séries 1 à 4 restent proches en deutéranopie : libeller directement ») ; anti-chevauchement ; cycle de tirets et de marqueurs dans mpl et plotly. Aucune règle nouvelle. Après A1, l'assouplissement de la consigne en clair serait une décision à part | pas de chevauchement dans `mpl-lignes-*` |
+| A3 | Thème Office : documenter le repli explicite (Segoe UI Semibold pour les titres, Segoe UI pour le texte) tant que les polices ne sont pas incorporées (B3) | plus d'empattements dans Word |
 | A4 | Règle « fond sombre » : sur tout aplat sombre (couverture, bandeau, terminal), pictogramme, filet et accents en valeurs sombres | tuile 8,22:1, or 10,35:1 sur `#121821` |
 | A5 | Jeton `trait-fort` (sombre `#67717E`, clair `#808A97`) pour les contours interactifs | ≥ 3,06:1 sur `fond`, `surface` et `surface-alt` |
-| A6 | Jetons `seq-1` à `seq-6` (table I4) ; palette divergente sur le même principe | ΔE ≥ 8,3 entre pas, normale et deutéranopie |
+| A6 | Jetons `seq-1` à `seq-5` (table I4), réservés aux aplats contigus, avec légende ou valeurs et bordure `trait-fort` pour une cellule isolée en pas bas ; palette divergente sur le même principe | ΔE ≥ 9,4 entre pas, en normale et en deutéranopie |
 | A7 | Règle d'impression et de gris : motif par série, fonds en contour, intitulés en gras | ne dépend plus de ΔL* |
-| A8 | Règle README : mermaid `neutral` ou `<picture>`, repli clair ; badges avec étiquette `#4F5A68` | badge à 2,66:1 sur la page sombre |
-| A9 | Signature : filet or sous le titre, sur tous les supports | — |
+| A8 | Règle README : mermaid `neutral` ou `<picture>`, repli clair ; étiquette de badge `#646E7B` dans les deux thèmes | blanc 5,17:1 ; 3,60:1 sur la page sombre, 4,86:1 sur la page claire |
 | A10 | `savefig.bbox: tight` dans les `mplstyle` ; style « document » pour les figures insérées dans un rapport | légende entière |
-| A11 | Règle de l'aperçu social (taille de titre, zone sûre, filet) | — |
-| A12 | Règle de diapositive : titre en graisse 600, au moins 28 pt ; au plus six séries ; étiquette de données dès cinq séries | — |
+| A11 | Règle de l'aperçu social (taille de titre, zone sûre) | — |
+| A12 | Règle de diapositive : titres en Segoe UI Semibold tant que Sora n'est pas incorporée (A3), en Sora 600 ensuite (B3 a) ; au moins 28 pt ; au plus six séries ; étiquette de données dès cinq séries | — |
+
+A9 (filet or) est passé en liste B (B5) : il change la signature visuelle.
+
+Toute nouvelle valeur de cette critique a été contrôlée contre la liste locale des couleurs à éviter (ΔE ≥ 15).
 
 ### (B) Décisions d'identité, réservées à Anaël
 
@@ -229,10 +236,12 @@ Gravité : 3 bloquants, 8 importants, 10 mineurs.
 | Option | Clair | Sombre | Mesures |
 |---|---|---|---|
 | a. garder | `#1D5BC2` (L* 41, C* 62, h 289°) | `#8DB0F7` (h 279°) | 6,31:1 et 7,98:1 sur `surface` ; ΔE au plus proche (`cat-7` sombre) 12,1 |
-| b. indigo | `#3B4CC0` (L* 38, C* 71, h 297°) | `#A9B2F5` (h 289°) | 7,04:1 et 8,55:1 ; `cat-7` sombre à ΔE 10,9, à la limite |
+| b. bleu acier, désaturé | `#1565A8` (L* 42, C* 42, h 273°) | `#8DB8E8` (L* 73, C* 29, h 265°) | 6,07:1 et 8,36:1 sur `surface` ; `sur-primaire` sur le sombre 8,58:1 ; `cat-7` sombre à ΔE 10,2, à la limite |
 | c. bleu pétrole | `#0F5F8C` (h 260°) | `#7CC3E8` (h 244°) | 6,92:1 et 8,92:1, mais ΔE 9,5 avec `cat-6` sombre : il faudrait refaire `cat-6` |
 
-Recommandation : **a**. Le caractère doit venir de l'or, de Sora et du filet (A9), pas d'un changement de bleu qui coûterait une palette.
+Une option indigo a été écartée : elle était trop proche d'une couleur de la liste locale à éviter.
+
+Recommandation : **a**. Le caractère doit venir de l'or, de Sora et du filet (B5), pas d'un changement de bleu qui coûterait une palette.
 
 **B2. Accent or en clair, en aplat**
 
@@ -242,7 +251,7 @@ Recommandation : **a**. Le caractère doit venir de l'or, de Sora et du filet (A
 | b. nouveau jeton `accent-aplat` | `#E0B54A` (L* 76, C* 59, h 86°) | `texte` 9,23:1 | or franc ; à 17,1 ΔE de `alerte` ; jamais en marque fine (1,93:1 sur blanc) |
 | c. or moyen | `#D4A537` (L* 70, C* 61, h 84°) | `texte` 7,84:1 | plus chaud, plus proche de `alerte` (ΔE 14,4) |
 
-Recommandation : **b**, réservé aux aplats et au point du pictogramme en clair. Sur la tuile `#1D5BC2`, le point passerait de 1,19:1 (`#8F6300`) à 3,66:1 avec `#E3C26B`, une valeur proche. `accent` `#8F6300` reste pour les marques fines.
+Recommandation : **b**, réservé aux aplats et au point du pictogramme en clair. Sur la tuile `#1D5BC2`, le point passerait de 1,19:1 (`#8F6300`) à 3,27:1 avec `#E0B54A`. `accent` `#8F6300` reste pour les marques fines.
 
 **B3. Polices**
 
@@ -256,20 +265,31 @@ Recommandation : **a**. Sans Sora, la charte devient anonyme.
 
 **B4. Bouton principal Streamlit**
 
-| Option | Mesures |
-|---|---|
-| a. un bleu plein propre à Streamlit, `#3B6FD0` | blanc 4,80:1 ; sur `fond` 3,88:1 |
-| a′. variante `#2F6FE0` | blanc 4,70:1 ; sur `fond` 3,97:1 |
-| b. ne pas utiliser `type="primary"` ; bouton secondaire seulement | conforme, mais pas de « geste fort » |
-| c. garder `#8DB0F7` | 2,17:1, non conforme WCAG 1.4.3 |
+La règle de la charte est « le bleu n'est jamais un aplat de bouton » : le bouton principal est neutre, et c'est un de ses points forts (section 5). Toute option en bleu plein est donc une **exception propre à Streamlit**, qui vient de son libellé blanc imposé.
 
-Recommandation : **a** (`#3B6FD0`), en jeton dédié `primaire-plein` (sombre). L'exception est à documenter : `primaryColor` colore aussi les cases et les curseurs.
+| Option | Respect de la règle | Mesures |
+|---|---|---|
+| b. ne pas utiliser `type="primary"` ; boutons en contour seulement | oui | libellé `texte` sur `surface` sombre ; perd le « geste fort » |
+| a. exception Streamlit : `primaryColor` `#3B6FD0` | non, exception documentée | blanc 4,80:1 ; sur `fond` 3,88:1 |
+| a′. exception Streamlit, variante `#2F6FE0` | non, exception documentée | blanc 4,70:1 ; sur `fond` 3,97:1 |
+| c. garder `#8DB0F7` | non, et non conforme WCAG 1.4.3 | 2,17:1 |
+
+Recommandation : **b** par défaut, puisqu'il respecte la règle. Choisir **a** seulement si Anaël veut garder un geste fort dans Streamlit. Dans ce cas, l'exception est à documenter dans la charte, avec ses effets : `primaryColor` colore aussi les cases et les curseurs.
+
+**B5. Filet or sous le titre, en signature**
+
+| Option | Effet |
+|---|---|
+| a. règle de tous les supports : couverture de deck, titre de rapport, bannière, aperçu social, première page web | signature reconnaissable partout ; or sombre `#E3C26B` sur fond sombre, `accent` `#8F6300` (5,31:1 sur blanc) en clair |
+| b. le garder seulement sur la bannière et l'aperçu social, comme aujourd'hui | statu quo ; identité faible hors README |
+
+Recommandation : **a**. C'est le geste le plus distinctif des rendus, et il ne coûte aucune couleur nouvelle.
 
 ## 4. Recoupement avec les constats des `LISEZMOI`
 
 | Constat (`LISEZMOI`) | Statut | Commentaire |
 |---|---|---|
-| Graphiques : bouton Streamlit 2,17:1 | trouvé seul, confirmé | mêmes pixels (`#FFFFFF` sur `#8DB0F7`) ; je retiens l'option a, comme le `LISEZMOI` |
+| Graphiques : bouton Streamlit 2,17:1 | trouvé seul, confirmé | mêmes pixels (`#FFFFFF` sur `#8DB0F7`) ; je recommande l'option b (pas de `type="primary"`), qui respecte la règle, et l'option a seulement en exception documentée |
 | Graphiques : pas de palette séquentielle | trouvé seul, confirmé | valeur basse à 1,12:1 sur le fond ; jetons proposés (A6) |
 | Graphiques : étiquettes des 8 lignes qui se chevauchent | trouvé seul, confirmé | j'ai vu aussi les séries 3, 4 et 5 superposées en sombre |
 | Graphiques : `cat-4`/`cat-8` clair proches (protanopie 4,1), `cat-1` vert-bleu en tritanopie | confirmé | mais le défaut le plus grave est `cat-2`/`cat-4` à 4,4 parmi les quatre **premières** séries (B3) |
