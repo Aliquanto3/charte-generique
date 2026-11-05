@@ -1,7 +1,7 @@
-# Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.0.0).
-# Exception connue à la règle « le bleu n'est jamais un aplat de bouton » : Streamlit remplit le bouton
-# principal en primaryColor, avec un libellé blanc imposé (aucune clé de thème ne le change, Streamlit 1.66).
-# On y met `primaire` ; le libellé blanc n'atteint pas 4,5:1 sur le primaire sombre (limite connue, voir CHARTE.md).
+# Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.1.0).
+# Règle Streamlit (B4) : jamais `type="primary"`, boutons en contour seulement. Streamlit remplirait le bouton
+# principal en primaryColor, avec un libellé blanc imposé (2,17:1 sur le primaire sombre). primaryColor reste
+# `primaire` pour les cases, curseurs, onglets et le focus ; borderColor est `trait-fort` (contours ≥ 3:1). Voir CHARTE.md.
 [theme]
 base = "dark"
 primaryColor = "#8DB0F7"
@@ -9,9 +9,9 @@ backgroundColor = "#0F1318"
 secondaryBackgroundColor = "#1E242C"
 textColor = "#E8ECF2"
 linkColor = "#8DB0F7"
-borderColor = "#333B46"
+borderColor = "#67717E"
 font = "'Atkinson Hyperlegible', system-ui, 'Segoe UI', Roboto, sans-serif"
 headingFont = "Sora, system-ui, 'Segoe UI', Roboto, sans-serif"
 codeFont = "'JetBrains Mono', 'Cascadia Mono', Consolas, ui-monospace, monospace"
 baseRadius = "10px"
-chartCategoricalColors = ["#8DB0F7", "#E3C26B", "#8CC7A0", "#F2A07B", "#E58FB8", "#6CCAD8", "#A9B4C6", "#9FAE4F"]
+chartCategoricalColors = ["#8DB0F7", "#E3C26B", "#8CC7A0", "#E58FB8", "#F2A07B", "#6CCAD8", "#A9B4C6", "#9FAE4F"]

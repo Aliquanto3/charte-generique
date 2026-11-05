@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from jetons import CHEMIN, charger
+from jetons import CHEMIN, PICTOGRAMME, SERIES, charger
 
 RACINE = Path(__file__).resolve().parent.parent
 GENERER = RACINE / "skills" / "charte" / "generer.py"
@@ -68,12 +68,14 @@ def _bloc_css(css, entete):
 @pytest.mark.parametrize("theme", ["sombre", "clair"])
 def test_css(j, theme):
     css = (DIST / "charte.css").read_text(encoding="utf-8")
-    attendu = {k: v for k, v in j[theme].items() if k != "cat"}
+    attendu = {k: v for k, v in j[theme].items() if k not in SERIES}
+    assert {"trait-fort", "accent-aplat", "badge-etiquette", "seq-1", "seq-5", "div-1", "div-5"} <= set(attendu)
     assert "Généré par generer.py depuis charte.tokens.json — ne pas modifier" in css
     assert j["version"] in css.splitlines()[0]
     forces = {"sombre": '[data-theme="sombre"],\n[data-theme="dark"]', "clair": '[data-theme="clair"],\n[data-theme="light"]'}[theme]
     bloc = _bloc_css(css, forces)
     assert {k: bloc[k] for k in attendu} == attendu
+    assert {k: bloc[f"picto-{k}"] for k in ("tuile", "barres", "point")} == {k: f"var(--{r})" for k, r in PICTOGRAMME[theme].items()}
     if theme == "clair":
         media = css.split("@media (prefers-color-scheme: light)")[1].split("\n}\n")[0]
         assert ':root:not([data-theme="sombre"]):not([data-theme="dark"])' in media
@@ -111,7 +113,21 @@ def test_module_python(j):
     assert m.theme() == j["sombre"]
     assert m.theme("clair") == j["clair"]
     m.theme("clair")["cat"].append("x")
-    assert len(m.CLAIR["cat"]) == 8
+    m.theme("clair")["seq"].append("x")
+    assert len(m.CLAIR["cat"]) == 8 and len(m.CLAIR["seq"]) == 5
+    assert m.POLICES["titres"]["office"] == "Sora SemiBold"
+
+
+def test_motifs_par_serie():
+    """A2, A7, précision 12 : tirets et marqueurs par série, listes publiées dans charte.py (plotly, trace par trace)."""
+    sys.dont_write_bytecode = True
+    spec = importlib.util.spec_from_file_location("charte_dist_motifs", DIST / "charte.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    for cle in ("plotly_dash", "plotly_symbol", "plotly_pattern", "mpl_linestyle", "mpl_marker", "mpl_hatch"):
+        assert len(m.MOTIFS[cle]) == 8, cle
+    assert len(set(m.MOTIFS["plotly_symbol"])) == len(set(m.MOTIFS["mpl_marker"])) == 8
+    assert m.MOTIFS["plotly_dash"][:4] == ["solid", "dash", "dashdot", "dot"]
     with pytest.raises(ValueError, match="thème inconnu"):
         m.theme("rose")
 
@@ -129,7 +145,9 @@ def _mpl(chemin):
 def test_mplstyle(j, theme):
     d = _mpl(DIST / f"charte-{theme}.mplstyle")
     c = j[theme]
-    assert d["axes.prop_cycle"] == "cycler('color', [" + ", ".join(f"'{x[1:]}'" for x in c["cat"]) + "])"
+    assert d["axes.prop_cycle"].startswith("cycler('color', [" + ", ".join(f"'{x[1:]}'" for x in c["cat"]) + "]) + cycler('linestyle', ")
+    assert "cycler('marker', ['o', 's', '^', 'D', 'v', 'P', 'X', '*'])" in d["axes.prop_cycle"]
+    assert d["savefig.bbox"] == "tight"
     assert d["figure.facecolor"] == c["fond"][1:]
     assert d["axes.facecolor"] == c["surface"][1:]
     assert d["text.color"] == c["texte"][1:]
@@ -144,9 +162,25 @@ def test_mplstyle_charge_par_matplotlib(j, theme):
     mpl = pytest.importorskip("matplotlib")
     rc = mpl.rc_params_from_file(DIST / f"charte-{theme}.mplstyle", use_default_template=False)
     assert len(rc) == len(_mpl(DIST / f"charte-{theme}.mplstyle"))  # matplotlib écarte (et journalise) clé ou valeur invalide
-    assert rc["axes.prop_cycle"].by_key()["color"] == j[theme]["cat"]
+    cycle = rc["axes.prop_cycle"].by_key()
+    assert cycle["color"] == j[theme]["cat"]
+    assert cycle["linestyle"][:4] == ["-", "--", "-.", ":"] and len(set(cycle["marker"])) == 8
+    assert rc["savefig.bbox"] == "tight"
     assert rc["axes.facecolor"] == j[theme]["surface"]
     assert rc["font.family"] == ["Atkinson Hyperlegible", "Segoe UI", "Roboto", "sans-serif"]
+
+
+def test_mplstyle_document(j):
+    """A10, m3 : figure de rapport sur `surface`, légende sans cadre, 200 dpi, bbox serrée, tailles en pt."""
+    d = _mpl(DIST / "charte-document.mplstyle")
+    c = j["clair"]
+    assert d["figure.facecolor"] == d["savefig.facecolor"] == d["axes.facecolor"] == c["surface"][1:]
+    assert (d["savefig.bbox"], d["savefig.dpi"], d["legend.frameon"]) == ("tight", "200", "False")
+    assert float(d["font.size"]) == j["taille"]["petit"] * 0.75
+    assert d["axes.prop_cycle"] == _mpl(DIST / "charte-clair.mplstyle")["axes.prop_cycle"]
+    mpl = pytest.importorskip("matplotlib")
+    rc = mpl.rc_params_from_file(DIST / "charte-document.mplstyle", use_default_template=False)
+    assert len(rc) == len(d)
 
 
 @pytest.mark.parametrize("theme", ["sombre", "clair"])
@@ -163,14 +197,14 @@ def test_plotly(j, theme):
 @pytest.mark.parametrize("theme", ["sombre", "clair"])
 def test_streamlit(j, theme):
     brut = (DIST / f"streamlit-{theme}.toml").read_text(encoding="utf-8")
-    assert "Exception connue" in brut
+    assert 'jamais `type=\"primary\"`' in brut and "Exception" not in brut
     t = tomllib.loads(brut)["theme"]
     c = j[theme]
     assert t["base"] == ("dark" if theme == "sombre" else "light")
     assert t["primaryColor"] == t["linkColor"] == c["primaire"]
     assert t["backgroundColor"] == c["fond"]
     assert t["secondaryBackgroundColor"] == c["surface-alt"]
-    assert t["textColor"] == c["texte"] and t["borderColor"] == c["trait"]
+    assert t["textColor"] == c["texte"] and t["borderColor"] == c["trait-fort"]
     assert t["font"] == j["police"]["texte"]["pile"] and t["headingFont"] == j["police"]["titres"]["pile"]
     assert t["codeFont"] == j["police"]["code"]["pile"]
     assert t["baseRadius"] == "10px"
@@ -206,7 +240,7 @@ def test_office(j):
     assert all(len(e) == 3 for e in fmt)
     assert [e.tag[len(A):] for e in racine.find(f"{A}themeElements")] == ["clrScheme", "fontScheme", "fmtScheme"]
     fonts = racine.find(f"{A}themeElements/{A}fontScheme")
-    assert fonts.find(f"{A}majorFont/{A}latin").get("typeface") == "Sora"
+    assert fonts.find(f"{A}majorFont/{A}latin").get("typeface") == "Sora SemiBold"  # nom ID 1 du ttf incorporé
     assert fonts.find(f"{A}minorFont/{A}latin").get("typeface") == "Atkinson Hyperlegible"
     assert racine.find(f"{A}themeElements/{A}fmtScheme") is not None
 
@@ -228,12 +262,13 @@ def test_svg(j):
     ET.fromstring(pic)
     assert 'aria-hidden="true"' in pic
     # var() dans une propriété `style`, pas dans un attribut de présentation (repli non garanti partout).
-    assert f'style="fill: var(--primaire, {s["primaire"]})"' in pic
-    assert f'style="stroke: var(--sur-primaire, {s["sur-primaire"]})"' in pic
-    assert f'style="fill: var(--accent, {s["accent"]})"' in pic
+    assert f'style="fill: var(--picto-tuile, {s["primaire"]})"' in pic
+    assert f'style="stroke: var(--picto-barres, {s["sur-primaire"]})"' in pic
+    assert f'style="fill: var(--picto-point, {s[PICTOGRAMME["sombre"]["point"]]})"' in pic
     assert not re.search(r'(fill|stroke)="var\(', pic)
     fav = (DIST / "favicon.svg").read_text(encoding="utf-8")
     ET.fromstring(fav)
     assert "var(" not in fav
     avant, apres = fav.split("@media (prefers-color-scheme: light)")
-    assert s["primaire"] in avant and c["primaire"] in apres and c["accent"] in apres
+    assert s["primaire"] in avant and c["primaire"] in apres
+    assert f".p {{ fill: {c['accent-aplat']}; }}" in apres and f".p {{ fill: {s[PICTOGRAMME['sombre']['point']]}; }}" in avant

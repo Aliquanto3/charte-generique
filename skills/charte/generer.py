@@ -18,18 +18,32 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "outils"))  # `-I` ne met pas le dossier du script dans sys.path
 
-from jetons import GENERIQUES, THEMES, charger  # noqa: E402
+from jetons import GENERIQUES, PICTOGRAMME, SERIES, THEMES, charger  # noqa: E402
 
 DIST = Path(__file__).resolve().parent / "dist"
 ENTETE = "Généré par generer.py depuis charte.tokens.json — ne pas modifier"
 NS_A = "http://schemas.openxmlformats.org/drawingml/2006/main"
+# Motifs par série (A2, A7) : la couleur n'est jamais seule. Même ordre que `cat-1` à `cat-8`.
+MOTIFS = {
+    "mpl_linestyle": ["-", "--", "-.", ":", "-", "--", "-.", ":"],
+    "mpl_marker": ["o", "s", "^", "D", "v", "P", "X", "*"],
+    "mpl_hatch": ["", "//", "..", "xx", "\\\\", "++", "--", "oo"],
+    "plotly_dash": ["solid", "dash", "dashdot", "dot", "longdash", "longdashdot", "solid", "dash"],
+    "plotly_symbol": ["circle", "square", "triangle-up", "diamond", "triangle-down", "cross", "x", "star"],
+    "plotly_pattern": ["", "/", ".", "x", "\\", "+", "-", "|"],
+}
 
 
 # --- aides -------------------------------------------------------------------------------------
 
 def couleurs(j: dict, theme: str) -> dict[str, str]:
-    """Rôles de couleur d'un thème, sans la liste `cat` (les `cat-N` y restent)."""
-    return {k: v for k, v in j[theme].items() if k != "cat"}
+    """Rôles de couleur d'un thème, sans les listes `cat`, `seq`, `div` (les `cat-N`… y restent)."""
+    return {k: v for k, v in j[theme].items() if k not in SERIES}
+
+
+def picto(j: dict, theme: str) -> dict[str, str]:
+    """Couleurs de la tuile, des barres et du point du pictogramme (rôles de `jetons.PICTOGRAMME`)."""
+    return {k: j[theme][r] for k, r in PICTOGRAMME[theme].items()}
 
 
 def jsn(obj) -> str:
@@ -47,7 +61,8 @@ def familles_mpl(j: dict, role: str) -> str:
 # --- CSS ---------------------------------------------------------------------------------------
 
 def _decl(j: dict, theme: str, indent: str) -> str:
-    return "".join(f"{indent}--{k}: {v};\n" for k, v in couleurs(j, theme).items())
+    roles = "".join(f"{indent}--{k}: {v};\n" for k, v in couleurs(j, theme).items())
+    return roles + "".join(f"{indent}--picto-{k}: var(--{r});\n" for k, r in PICTOGRAMME[theme].items())
 
 
 def css(j: dict) -> str:
@@ -91,35 +106,58 @@ def _dict_py(nom: str, d: dict) -> str:
 
 
 def module_py(j: dict) -> str:
-    polices = {r: {"pile": p["pile"], "familles": p["familles"], "graisse": p["graisse"]} for r, p in j["police"].items()}
+    polices = {r: {"pile": p["pile"], "familles": p["familles"], "graisse": p["graisse"], "office": p["office"]}
+               for r, p in j["police"].items()}
     return (
         f'"""{ENTETE}.\n\nCharte générique : jetons prêts à l\'emploi, sans dépendance."""\n\n'
         f'VERSION = "{j["version"]}"\n\n'
         + _dict_py("SOMBRE", j["sombre"]) + "\n" + _dict_py("CLAIR", j["clair"]) + "\n"
         + _dict_py("POLICES", polices) + "\n" + _dict_py("TAILLES", j["taille"]) + "\n"
         + _dict_py("ESPACEMENTS", j["espacement"]) + "\n" + _dict_py("RAYONS", j["rayon"]) + "\n"
+        + "\n# Motifs par série (tirets, marqueurs, hachures), dans l'ordre de `cat` : à appliquer trace par trace en plotly.\n"
+        + _dict_py("MOTIFS", MOTIFS)
         + "\ndef theme(nom=\"sombre\"):\n"
         '    """Copie du thème `sombre` ou `clair` (alias `dark`, `light`)."""\n'
         '    themes = {"sombre": SOMBRE, "dark": SOMBRE, "clair": CLAIR, "light": CLAIR}\n'
         "    if nom not in themes:\n"
         '        raise ValueError(f"thème inconnu : {nom!r} (sombre ou clair)")\n'
         "    t = dict(themes[nom])\n"
-        '    t["cat"] = list(t["cat"])\n'
+        f'    for k in {SERIES!r}:\n'
+        '        t[k] = list(t[k])\n'
         "    return t\n"
     )
 
 
 # --- matplotlib, plotly, streamlit, mermaid ----------------------------------------------------
 
-def mplstyle(j: dict, theme: str) -> str:
+def _liste_mpl(valeurs: list[str]) -> str:
+    return "[" + ", ".join(f"'{v}'" for v in valeurs) + "]"
+
+
+def cycle_mpl(j: dict, theme: str) -> str:
+    """Couleurs `cat`, tirets et marqueurs : chaque série porte un motif (A2, A7)."""
+    cat = [sans_diese(x) for x in j[theme]["cat"]]
+    return (f"cycler('color', {_liste_mpl(cat)}) + cycler('linestyle', {_liste_mpl(MOTIFS['mpl_linestyle'])})"
+            f" + cycler('marker', {_liste_mpl(MOTIFS['mpl_marker'])})")
+
+
+def pt(px: float) -> float:
+    """px CSS → pt (1 px = 0,75 pt)."""
+    return px * 0.75
+
+
+def mplstyle(j: dict, theme: str, document: bool = False) -> str:
+    """Style matplotlib. `document` : figure insérée dans un rapport (fond `surface`, tailles en pt, titre à gauche, 200 dpi)."""
     c = couleurs(j, theme)
-    cycle = ", ".join(f"'{sans_diese(c[f'cat-{i}'])}'" for i in range(1, len(j[theme]["cat"]) + 1))
+    fond = c["surface"] if document else c["fond"]
+    t = j["taille"]
     lignes = [
-        f"# {ENTETE} (version {j['version']}).",
-        f"axes.prop_cycle: cycler('color', [{cycle}])",
-        f"figure.facecolor: {sans_diese(c['fond'])}",
-        f"figure.edgecolor: {sans_diese(c['fond'])}",
-        f"savefig.facecolor: {sans_diese(c['fond'])}",
+        f"# {ENTETE} (version {j['version']})." + (" Style « document » : figure insérée dans un rapport." if document else ""),
+        f"axes.prop_cycle: {cycle_mpl(j, theme)}",
+        f"figure.facecolor: {sans_diese(fond)}",
+        f"figure.edgecolor: {sans_diese(fond)}",
+        f"savefig.facecolor: {sans_diese(fond)}",
+        "savefig.bbox: tight",
         f"axes.facecolor: {sans_diese(c['surface'])}",
         f"axes.edgecolor: {sans_diese(c['trait'])}",
         f"axes.labelcolor: {sans_diese(c['texte'])}",
@@ -134,12 +172,16 @@ def mplstyle(j: dict, theme: str) -> str:
         f"xtick.color: {sans_diese(c['texte-attenue'])}",
         f"ytick.color: {sans_diese(c['texte-attenue'])}",
         f"font.family: {familles_mpl(j, 'texte')}",
-        f"font.size: {j['taille']['petit']}",
-        f"axes.titlesize: {j['taille']['grand']}",
+        f"font.size: {pt(t['petit']) if document else t['petit']}",
+        f"axes.titlesize: {pt(t['grand']) if document else t['grand']}",
         f"legend.facecolor: {sans_diese(c['surface'])}",
         f"legend.edgecolor: {sans_diese(c['trait'])}",
         f"legend.labelcolor: {sans_diese(c['texte'])}",
+        "lines.linewidth: 2",
+        "lines.markersize: 5",
     ]
+    if document:
+        lignes += ["axes.titlelocation: left", "legend.frameon: False", "figure.dpi: 200", "savefig.dpi: 200"]
     return "\n".join(lignes) + "\n"
 
 
@@ -171,16 +213,16 @@ def streamlit(j: dict, theme: str) -> str:
     cles = [
         ("base", theme_base(theme)), ("primaryColor", c["primaire"]), ("backgroundColor", c["fond"]),
         ("secondaryBackgroundColor", c["surface-alt"]), ("textColor", c["texte"]), ("linkColor", c["primaire"]),
-        ("borderColor", c["trait"]), ("font", p["texte"]["pile"]), ("headingFont", p["titres"]["pile"]),
+        ("borderColor", c["trait-fort"]), ("font", p["texte"]["pile"]), ("headingFont", p["titres"]["pile"]),
         ("codeFont", p["code"]["pile"]), ("baseRadius", f"{j['rayon']['moyen']}px"),
     ]
     corps = "".join(f"{k} = {_toml_str(v)}\n" for k, v in cles)
     corps += "chartCategoricalColors = [" + ", ".join(_toml_str(x) for x in j[theme]["cat"]) + "]\n"
     return (
         f"# {ENTETE} (version {j['version']}).\n"
-        "# Exception connue à la règle « le bleu n'est jamais un aplat de bouton » : Streamlit remplit le bouton\n"
-        "# principal en primaryColor, avec un libellé blanc imposé (aucune clé de thème ne le change, Streamlit 1.66).\n"
-        "# On y met `primaire` ; le libellé blanc n'atteint pas 4,5:1 sur le primaire sombre (limite connue, voir CHARTE.md).\n"
+        "# Règle Streamlit (B4) : jamais `type=\"primary\"`, boutons en contour seulement. Streamlit remplirait le bouton\n"
+        "# principal en primaryColor, avec un libellé blanc imposé (2,17:1 sur le primaire sombre). primaryColor reste\n"
+        "# `primaire` pour les cases, curseurs, onglets et le focus ; borderColor est `trait-fort` (contours ≥ 3:1). Voir CHARTE.md.\n"
         "[theme]\n" + corps
     )
 
@@ -208,7 +250,7 @@ def theme_office(j: dict) -> str:
     schema += [(f"accent{i}", c[f"cat-{i}"]) for i in range(1, 7)]
     schema += [("hlink", c["primaire"]), ("folHlink", c["primaire-vif"])]
     coul = "".join(f'      <a:{k}><a:srgbClr val="{sans_diese(v)}"/></a:{k}>\n' for k, v in schema)
-    p = j["police"]
+    p = j["police"]  # noms « office » : familles vues par Office une fois les polices incorporées
     remplissage = '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
     ligne = '<a:ln w="{w}" cap="flat" cmpd="sng" algn="ctr"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:prstDash val="solid"/></a:ln>'
     return (
@@ -218,8 +260,8 @@ def theme_office(j: dict) -> str:
         "  <a:themeElements>\n"
         '    <a:clrScheme name="Charte générique">\n' + coul + "    </a:clrScheme>\n"
         '    <a:fontScheme name="Charte générique">\n'
-        f'      <a:majorFont><a:latin typeface="{p["titres"]["familles"][0]}"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>\n'
-        f'      <a:minorFont><a:latin typeface="{p["texte"]["familles"][0]}"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont>\n'
+        f'      <a:majorFont><a:latin typeface="{p["titres"]["office"]}"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>\n'
+        f'      <a:minorFont><a:latin typeface="{p["texte"]["office"]}"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont>\n'
         "    </a:fontScheme>\n"
         '    <a:fmtScheme name="Charte générique">\n'
         f"      <a:fillStyleLst>{remplissage}{remplissage}{remplissage}</a:fillStyleLst>\n"
@@ -270,24 +312,24 @@ def thmx(xml_theme: str) -> bytes:
 # --- SVG ---------------------------------------------------------------------------------------
 
 def pictogramme(j: dict) -> str:
-    s = j["sombre"]
+    s = picto(j, "sombre")
     return (
         f"<!-- {ENTETE} (version {j['version']}). -->\n"
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">\n'
-        f'  <rect width="32" height="32" rx="8" style="fill: var(--primaire, {s["primaire"]})"/>\n'
-        f'  <path d="M9 10h14M9 16h9M9 22h14" fill="none" style="stroke: var(--sur-primaire, {s["sur-primaire"]})" stroke-width="3"'
+        f'  <rect width="32" height="32" rx="8" style="fill: var(--picto-tuile, {s["tuile"]})"/>\n'
+        f'  <path d="M9 10h14M9 16h9M9 22h14" fill="none" style="stroke: var(--picto-barres, {s["barres"]})" stroke-width="3"'
         ' stroke-linecap="round"/>\n'
-        f'  <circle cx="23" cy="16" r="2.5" style="fill: var(--accent, {s["accent"]})"/>\n'
+        f'  <circle cx="23" cy="16" r="2.5" style="fill: var(--picto-point, {s["point"]})"/>\n'
         "</svg>\n"
     )
 
 
 def favicon(j: dict) -> str:
-    s, c = j["sombre"], j["clair"]
+    s, c = picto(j, "sombre"), picto(j, "clair")
 
     def regles(t: dict, indent: str) -> str:
-        return (f"{indent}.t {{ fill: {t['primaire']}; }}\n{indent}.b {{ stroke: {t['sur-primaire']}; }}\n"
-                f"{indent}.p {{ fill: {t['accent']}; }}\n")
+        return (f"{indent}.t {{ fill: {t['tuile']}; }}\n{indent}.b {{ stroke: {t['barres']}; }}\n"
+                f"{indent}.p {{ fill: {t['point']}; }}\n")
 
     return (
         f"<!-- {ENTETE} (version {j['version']}). -->\n"
@@ -315,6 +357,7 @@ def fichiers(j: dict) -> dict[str, bytes]:
         texte[f"plotly-{t}.json"] = plotly(j, t)
         texte[f"streamlit-{t}.toml"] = streamlit(j, t)
         texte[f"mermaid-{t}.json"] = mermaid(j, t)
+    texte["charte-document.mplstyle"] = mplstyle(j, "clair", document=True)
     texte["theme-office.xml"] = xml
     texte["pictogramme.svg"] = pictogramme(j)
     texte["favicon.svg"] = favicon(j)

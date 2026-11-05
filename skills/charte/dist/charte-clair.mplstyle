@@ -1,8 +1,9 @@
-# Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.0.0).
-axes.prop_cycle: cycler('color', ['1D5BC2', 'A87A00', '1F8155', 'C24D1B', 'B83A75', '0E7C8C', '6F7378', '8A5A2B'])
+# Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.1.0).
+axes.prop_cycle: cycler('color', ['1D5BC2', 'A87A00', '1F8155', 'B83A75', 'C24D1B', '0E7C8C', '6F7378', '8A5A2B']) + cycler('linestyle', ['-', '--', '-.', ':', '-', '--', '-.', ':']) + cycler('marker', ['o', 's', '^', 'D', 'v', 'P', 'X', '*'])
 figure.facecolor: F6F8FB
 figure.edgecolor: F6F8FB
 savefig.facecolor: F6F8FB
+savefig.bbox: tight
 axes.facecolor: FFFFFF
 axes.edgecolor: CED5DF
 axes.labelcolor: 121821
@@ -22,3 +23,5 @@ axes.titlesize: 18
 legend.facecolor: FFFFFF
 legend.edgecolor: CED5DF
 legend.labelcolor: 121821
+lines.linewidth: 2
+lines.markersize: 5
