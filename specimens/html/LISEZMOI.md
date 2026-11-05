@@ -21,12 +21,21 @@ Sans `nofocus`, le bouton « Focus visible » est focalisé au chargement : les 
 - `rendus/specimen-clair.pdf` : A4 clair ;
 - `rendus/specimen-gris.pdf` et `specimen-gris-page1.png` : variante en niveaux de gris.
 
+## Règles appliquées (v2.1)
+
+- **Filet or (B5)** : la page s'ouvre sur un titre suivi du filet `accent` (96 × 4 px).
+- **Contours interactifs (A5)** : bouton secondaire, champs, sélecteur de thème et modale en `trait-fort` (3,06 à 3,76:1) ; cartes et tableau gardent `trait`.
+- **Pictogramme (A4)** : `--picto-tuile`, `--picto-barres`, `--picto-point` de `charte.css`, choisis par mesure dans chaque thème.
+- **Aplat d'or (B2)** : bloc chiffre clé en `accent-aplat`, texte `texte-sur-vif`.
+- **Impression et gris (A7)** : fonds pleins en contour (pastilles, bandeaux, aplat d'or, bouton principal), intitulés en gras, un tiret par série dans le graphique à huit lignes (même cycle que matplotlib).
+- **Nuancier** : nouveaux jetons `trait-fort`, `accent-aplat`, `badge-etiquette`, `seq-1` à `seq-5`, `div-1` à `div-5`.
+- Poids : PNG en 256 couleurs ; dossier `rendus/` à 1,9 Mo.
+
 ## Constats pour la critique
 
-- **Conflit de charte, bordure du bouton secondaire.** La charte (§1) exige 3:1 pour une marque non textuelle, « bordure de bouton » comprise, mais prescrit aussi « boutons secondaires : bordure `trait` ». Or `trait` atteint 1,53:1 sur `surface` (1,65:1 sur `fond`) en sombre, et 1,48:1 sur `surface` (1,39:1 sur `fond`) en clair. Le spécimen applique la règle telle quelle, sans la masquer ; le contour se voit à peine en clair. Options : bordure en `neutre` (5,48:1 en sombre, 4,47:1 en clair sur `surface`), comme les champs du spécimen ; ou un nouveau jeton `trait-fort` (≥ 3:1) en v2.1, `trait` restant aux séparateurs. Le bouton désactivé garde `trait` : WCAG exempte les composants inactifs.
 - Les pastilles de statut portent icône et libellé : le sens ne passe pas par la couleur seule.
-- Dans le graphique à huit lignes, les séries 5 à 8 restent proches en gris ; seule la légende directe les distingue (pas de motif).
-- Les bandeaux `*-doux` se distinguent peu les uns des autres en niveaux de gris : seul le texte en gras (« Succès. », « Alerte. »…) porte le sens.
-- Impression : les fonds pleins sont retirés (pastilles et bandeaux passent en contour, bouton principal en contour épais) ; le PDF en gris est rasterisé par le filtre (~1 Mo contre ~0,15 Mo).
+- Les bandeaux `*-doux` restent peu distincts en niveaux de gris : l'intitulé en gras porte le sens, comme la règle A7 l'exige.
+- Le PDF en gris est rasterisé par le filtre `grayscale(1)` (~1,4 Mo contre ~0,25 Mo pour le PDF clair).
 - Polices : `@font-face` sur les `woff2` locales, rendu avec les vraies polices.
-- Le thème sombre en pleine page est long (~3500 px) : le nuancier occupe le tiers inférieur.
+- Le thème sombre en pleine page est long (~4400 px) : le nuancier, enrichi des palettes, occupe le tiers inférieur.
+- Impression : les sauts de section laissent encore des pages remplies aux deux tiers (m8 de la critique, hors liste A).

@@ -35,7 +35,8 @@ def png(profil: str, theme: str) -> None:
     bas = img.height
     while bas > 1 and all(img.getpixel((x, bas - 1)) == fond for x in range(0, img.width, 40)):
         bas -= 1
-    img.crop((0, 0, img.width, min(img.height, bas + 48))).save(sortie, optimize=True)
+    img = img.crop((0, 0, img.width, min(img.height, bas + 48)))
+    img.quantize(colors=256, dither=Image.Dither.NONE).save(sortie, optimize=True)  # poids : ~2 Mo au plus pour le dossier
 
 
 def pdf(profil: str, nom: str, requete: str) -> Path:
