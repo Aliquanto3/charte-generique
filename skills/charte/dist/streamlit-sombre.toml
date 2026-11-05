@@ -1,6 +1,7 @@
 # Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.0.0).
 # Exception connue à la règle « le bleu n'est jamais un aplat de bouton » : Streamlit remplit le bouton
-# principal en primaryColor, avec un texte qu'il choisit lui-même. On y met donc `primaire`.
+# principal en primaryColor, avec un libellé blanc imposé (aucune clé de thème ne le change, Streamlit 1.66).
+# On y met `primaire` ; le libellé blanc n'atteint pas 4,5:1 sur le primaire sombre (limite connue, voir CHARTE.md).
 [theme]
 base = "dark"
 primaryColor = "#8DB0F7"

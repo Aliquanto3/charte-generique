@@ -146,6 +146,6 @@ Chaque support a ses fichiers dans `skills/charte/dist/`, générés par `genere
 - Office : `theme-office.xml` et `charte.thmx` (thème clair, qui imprime bien) ;
 - pictogramme et favicon : `pictogramme.svg` (variables CSS avec repli) et `favicon.svg` (autonome, clair et sombre).
 
-**Exception Streamlit** : Streamlit remplit le bouton principal en `primaryColor`, avec un texte qu'il choisit lui-même. Le thème y met `primaire`, ce qui déroge à la règle « le bleu n'est jamais un aplat de bouton ».
+**Exception Streamlit** : Streamlit remplit le bouton principal en `primaryColor`, avec un libellé blanc imposé (Streamlit 1.66 n'a aucune clé de thème pour la couleur de ce libellé). Le thème y met `primaire`, ce qui déroge à la règle « le bleu n'est jamais un aplat de bouton ». Limite connue : ce libellé blanc atteint 6,3:1 sur le primaire clair, mais 2,2:1 seulement sur le primaire sombre, sous le seuil de 4,5:1 ; à mesurer sur capture (story 1.4) avant de choisir un correctif.
 
 Les règles propres à chaque support (impression et niveaux de gris, diapositives, README, image d'aperçu des réseaux sociaux) seront complétées en v2.1, après la mise à l'épreuve par les spécimens.

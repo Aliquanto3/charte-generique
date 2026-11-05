@@ -139,6 +139,17 @@ def test_mplstyle(j, theme):
 
 
 @pytest.mark.parametrize("theme", ["sombre", "clair"])
+def test_mplstyle_charge_par_matplotlib(j, theme):
+    """Hors CI (groupe `specimens`) : matplotlib accepte chaque clé et chaque valeur."""
+    mpl = pytest.importorskip("matplotlib")
+    rc = mpl.rc_params_from_file(DIST / f"charte-{theme}.mplstyle", use_default_template=False)
+    assert len(rc) == len(_mpl(DIST / f"charte-{theme}.mplstyle"))  # matplotlib écarte (et journalise) clé ou valeur invalide
+    assert rc["axes.prop_cycle"].by_key()["color"] == j[theme]["cat"]
+    assert rc["axes.facecolor"] == j[theme]["surface"]
+    assert rc["font.family"] == ["Atkinson Hyperlegible", "Segoe UI", "Roboto", "sans-serif"]
+
+
+@pytest.mark.parametrize("theme", ["sombre", "clair"])
 def test_plotly(j, theme):
     lay = json.loads((DIST / f"plotly-{theme}.json").read_text(encoding="utf-8"))["layout"]
     c = j[theme]
@@ -187,6 +198,13 @@ def test_office(j):
     attendu.update({f"accent{i}": c[f"cat-{i}"] for i in range(1, 7)})
     assert len(schema) == 12
     assert schema == {k: v[1:] for k, v in attendu.items()}
+    # Ordre imposé par le schéma OOXML (CT_ColorScheme, CT_StyleMatrix) : PowerPoint rejette un autre ordre.
+    ordre = ["dk1", "lt1", "dk2", "lt2", *(f"accent{i}" for i in range(1, 7)), "hlink", "folHlink"]
+    assert list(schema) == ordre
+    fmt = racine.find(f"{A}themeElements/{A}fmtScheme")
+    assert [e.tag[len(A):] for e in fmt] == ["fillStyleLst", "lnStyleLst", "effectStyleLst", "bgFillStyleLst"]
+    assert all(len(e) == 3 for e in fmt)
+    assert [e.tag[len(A):] for e in racine.find(f"{A}themeElements")] == ["clrScheme", "fontScheme", "fmtScheme"]
     fonts = racine.find(f"{A}themeElements/{A}fontScheme")
     assert fonts.find(f"{A}majorFont/{A}latin").get("typeface") == "Sora"
     assert fonts.find(f"{A}minorFont/{A}latin").get("typeface") == "Atkinson Hyperlegible"
@@ -209,9 +227,11 @@ def test_svg(j):
     pic = (DIST / "pictogramme.svg").read_text(encoding="utf-8")
     ET.fromstring(pic)
     assert 'aria-hidden="true"' in pic
-    assert f'fill="var(--primaire, {s["primaire"]})"' in pic
-    assert f'stroke="var(--sur-primaire, {s["sur-primaire"]})"' in pic
-    assert f'fill="var(--accent, {s["accent"]})"' in pic
+    # var() dans une propriété `style`, pas dans un attribut de présentation (repli non garanti partout).
+    assert f'style="fill: var(--primaire, {s["primaire"]})"' in pic
+    assert f'style="stroke: var(--sur-primaire, {s["sur-primaire"]})"' in pic
+    assert f'style="fill: var(--accent, {s["accent"]})"' in pic
+    assert not re.search(r'(fill|stroke)="var\(', pic)
     fav = (DIST / "favicon.svg").read_text(encoding="utf-8")
     ET.fromstring(fav)
     assert "var(" not in fav

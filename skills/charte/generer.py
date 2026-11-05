@@ -179,7 +179,8 @@ def streamlit(j: dict, theme: str) -> str:
     return (
         f"# {ENTETE} (version {j['version']}).\n"
         "# Exception connue à la règle « le bleu n'est jamais un aplat de bouton » : Streamlit remplit le bouton\n"
-        "# principal en primaryColor, avec un texte qu'il choisit lui-même. On y met donc `primaire`.\n"
+        "# principal en primaryColor, avec un libellé blanc imposé (aucune clé de thème ne le change, Streamlit 1.66).\n"
+        "# On y met `primaire` ; le libellé blanc n'atteint pas 4,5:1 sur le primaire sombre (limite connue, voir CHARTE.md).\n"
         "[theme]\n" + corps
     )
 
@@ -273,9 +274,10 @@ def pictogramme(j: dict) -> str:
     return (
         f"<!-- {ENTETE} (version {j['version']}). -->\n"
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">\n'
-        f'  <rect width="32" height="32" rx="8" fill="var(--primaire, {s["primaire"]})"/>\n'
-        f'  <path d="M9 10h14M9 16h9M9 22h14" stroke="var(--sur-primaire, {s["sur-primaire"]})" stroke-width="3" stroke-linecap="round"/>\n'
-        f'  <circle cx="23" cy="16" r="2.5" fill="var(--accent, {s["accent"]})"/>\n'
+        f'  <rect width="32" height="32" rx="8" style="fill: var(--primaire, {s["primaire"]})"/>\n'
+        f'  <path d="M9 10h14M9 16h9M9 22h14" fill="none" style="stroke: var(--sur-primaire, {s["sur-primaire"]})" stroke-width="3"'
+        ' stroke-linecap="round"/>\n'
+        f'  <circle cx="23" cy="16" r="2.5" style="fill: var(--accent, {s["accent"]})"/>\n'
         "</svg>\n"
     )
 
