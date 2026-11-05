@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from urllib.parse import quote
 
 RACINE = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(RACINE / "skills" / "charte" / "outils"))
@@ -21,7 +22,8 @@ ICI = Path(__file__).resolve().parent
 RENDUS = ICI / "rendus"
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 MERMAID = RACINE / "skills" / "charte" / "dist" / "mermaid-sombre.json"
-# shields.io : texte #fff, ou #333 sur fond clair (luminosité > 0,69)
+# Couleurs imposées par shields.io (badge-maker), hors charte : servent seulement à mesurer
+# le contraste du texte que shields.io choisira (#fff, ou #333 si luminosité > 0,69).
 BLANC, SOMBRE = "#FFFFFF", "#333333"
 
 
@@ -46,6 +48,8 @@ def badges() -> list[dict]:
             ratio = couleurs.contraste(t, col)
             if ratio >= 4.5:
                 break
+        else:
+            raise ValueError(f"badge {nom} : aucune variante lisible parmi {cles}")
         res.append({"nom": nom, "jeton": cle, "hex": col, "texte": t, "ratio": ratio,
                     "label": label, "ratio_label": couleurs.contraste(BLANC, label),
                     "essaye": cles[: cles.index(cle) + 1]})
@@ -53,7 +57,7 @@ def badges() -> list[dict]:
 
 
 def url_badge(b: dict) -> str:
-    return (f"https://img.shields.io/badge/{b['nom']}-{b['jeton'].replace('-', '--')}-{b['hex'][1:]}"
+    return (f"https://img.shields.io/badge/{quote(b['nom'])}-{b['jeton'].replace('-', '--')}-{b['hex'][1:]}"
             f"?labelColor={b['label'][1:]}")
 
 
@@ -87,7 +91,9 @@ DIAGRAMME = """flowchart LR
     D --> E[Critique]"""
 
 
-def readme(bs: list[dict]) -> str:
+def readme(bs: list[dict], mermaid_png: bool) -> str:
+    rendu = ("[`rendus/mermaid.png`](rendus/mermaid.png) montre l'intention." if mermaid_png
+             else "Rendu `mermaid.png` indisponible (voir `LISEZMOI.md`).")
     badges_md = " ".join(f"![{b['nom']}]({url_badge(b)})" for b in bs)
     return f"""<picture>
   <source media="(prefers-color-scheme: dark)" srcset="banniere-sombre.svg">
@@ -107,7 +113,7 @@ Dépôt témoin : un README type pour un projet qui applique la charte génériq
 ```
 
 > Note : GitHub applique une partie seulement des thèmes mermaid (`themeVariables`) et ignore
-> `%%{{init}}%%` dans certains contextes de rendu. `rendus/mermaid.png` montre l'intention.
+> `%%{{init}}%%` dans certains contextes de rendu. {rendu}
 
 ## Fonctionnalités
 
@@ -174,29 +180,33 @@ def capture(src: Path, dest: Path, w: int, h: int) -> None:
 def mmdc() -> bool:
     cfg = RENDUS / "_mermaid-config.json"
     mmd = RENDUS / "_diagramme.mmd"
+    pup = RENDUS / "_puppeteer.json"
     data = json.loads(MERMAID.read_text("utf-8"))
     cfg.write_text(json.dumps(data), encoding="utf-8")
+    # Edge du poste plutôt que le chrome-headless-shell que puppeteer ne télécharge pas
+    pup.write_text(json.dumps({"executablePath": EDGE, "headless": "shell"}), encoding="utf-8")
     mmd.write_text(DIAGRAMME + "\n", encoding="utf-8")
     try:
         subprocess.run(["npx.cmd", "-y", "@mermaid-js/mermaid-cli", "-i", str(mmd), "-o",
-                        str(RENDUS / "mermaid.png"), "-c", str(cfg),
-                        "-b", data["themeVariables"]["background"], "-w", "900"],
+                        str(RENDUS / "mermaid.png"), "-c", str(cfg), "-p", str(pup),
+                        "-b", data["themeVariables"]["background"], "--size", "900"],
                        check=True, timeout=120, capture_output=True)
         return True
     except (subprocess.SubprocessError, OSError) as e:
-        print("mmdc indisponible :", type(e).__name__)
+        print("mmdc indisponible :", type(e).__name__, getattr(e, "stderr", b"")[-600:])
         return False
     finally:
         cfg.unlink(missing_ok=True)
         mmd.unlink(missing_ok=True)
+        pup.unlink(missing_ok=True)
 
 
 def main() -> None:
     RENDUS.mkdir(exist_ok=True)
     bs = badges()
     ecrire_badges(bs)
-    (ICI / "README-temoin.md").write_text(readme(bs), encoding="utf-8")
     ok = mmdc()
+    (ICI / "README-temoin.md").write_text(readme(bs, ok), encoding="utf-8")
     for theme in ("sombre", "clair"):
         page = ICI / f"_rendu-{theme}.html"
         page.write_text(html_page(theme, bs, ok), encoding="utf-8")

@@ -73,3 +73,30 @@ def test_readme_temoin_structure():
     assert "```mermaid" in texte
     assert "| Fonction |" in texte
     assert "## Captures" in texte
+
+
+def test_readme_temoin_init_mermaid_et_picture():
+    import json
+
+    texte = (DOSSIER / "README-temoin.md").read_text(encoding="utf-8")
+    assert 'media="(prefers-color-scheme: light)" srcset="banniere-clair.svg"' in texte
+    assert 'media="(prefers-color-scheme: dark)" srcset="banniere-sombre.svg"' in texte
+    init = re.search(r"%%\{init: (.*)\}%%", texte).group(1)
+    attendu = RACINE / "skills" / "charte" / "dist" / "mermaid-sombre.json"
+    assert json.loads(init) == json.loads(attendu.read_text(encoding="utf-8"))
+    for lien in re.findall(r"\]\((rendus/[^)]+)\)", texte):
+        assert (DOSSIER / lien).is_file(), lien
+
+
+def test_badges_lisibles_et_url_ascii():
+    import couleurs
+
+    texte = (DOSSIER / "badges.md").read_text(encoding="utf-8")
+    urls = re.findall(r"https://img\.shields\.io/badge/[^)]+", texte)
+    assert urls and all(u.isascii() for u in urls)
+    for fond, etiquette in re.findall(r"-([0-9A-F]{6})\?labelColor=([0-9A-F]{6})", texte):
+        # texte choisi par shields.io (badge-maker) : #333 si luminosité > 0,69, sinon blanc
+        r, g, b = (int(fond[i:i + 2], 16) for i in (0, 2, 4))
+        texte_badge = "#333333" if (r * 299 + g * 587 + b * 114) / 255000 > 0.69 else "#FFFFFF"
+        assert couleurs.contraste(texte_badge, "#" + fond) >= 4.5, fond
+        assert couleurs.contraste("#FFFFFF", "#" + etiquette) >= 4.5, etiquette

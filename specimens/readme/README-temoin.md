@@ -4,7 +4,7 @@
   <img alt="Projet témoin" src="banniere-sombre.svg">
 </picture>
 
-![succès](https://img.shields.io/badge/succès-succes-1B7043?labelColor=121821) ![alerte](https://img.shields.io/badge/alerte-alerte--texte-9A4A00?labelColor=121821) ![erreur](https://img.shields.io/badge/erreur-erreur-B3261E?labelColor=121821) ![info](https://img.shields.io/badge/info-primaire-1D5BC2?labelColor=121821) ![neutre](https://img.shields.io/badge/neutre-texte--attenue-4F5A68?labelColor=121821)
+![succès](https://img.shields.io/badge/succ%C3%A8s-succes-1B7043?labelColor=121821) ![alerte](https://img.shields.io/badge/alerte-alerte--texte-9A4A00?labelColor=121821) ![erreur](https://img.shields.io/badge/erreur-erreur-B3261E?labelColor=121821) ![info](https://img.shields.io/badge/info-primaire-1D5BC2?labelColor=121821) ![neutre](https://img.shields.io/badge/neutre-texte--attenue-4F5A68?labelColor=121821)
 
 Dépôt témoin : un README type pour un projet qui applique la charte générique.
 
@@ -20,7 +20,7 @@ flowchart LR
 ```
 
 > Note : GitHub applique une partie seulement des thèmes mermaid (`themeVariables`) et ignore
-> `%%{init}%%` dans certains contextes de rendu. `rendus/mermaid.png` montre l'intention.
+> `%%{init}%%` dans certains contextes de rendu. [`rendus/mermaid.png`](rendus/mermaid.png) montre l'intention.
 
 ## Fonctionnalités
 
