@@ -5,12 +5,13 @@
 Charte graphique générique, sombre d'abord, pour des applications web, des rapports, des présentations et des dépôts de code.
 
 - **Jetons** : [`skills/charte/jetons/charte.tokens.json`](skills/charte/jetons/charte.tokens.json), au format DTCG 2025.10, source unique de toutes les valeurs.
-- **Charte lisible** : [`docs/CHARTE.md`](docs/CHARTE.md) (rôles, règles d'usage, typographie, formes, pictogramme).
+- **Charte lisible** : [`docs/CHARTE.md`](docs/CHARTE.md), v2.1 (rôles, palettes séquentielle et divergente, règles d'usage et par support, typographie et polices incorporées dans Office, formes, pictogramme).
 - **Fichiers prêts à l'emploi** : [`skills/charte/dist/`](skills/charte/dist/) (CSS, Python, matplotlib, plotly, Streamlit, mermaid, Office, SVG), généré par `uv run --no-project python -I skills/charte/generer.py` (`--verifier` en CI).
-- **Contrôles** : contrastes WCAG 2.1 et distinction des séries de graphique en vision normale.
+- **Contrôles** : contrastes WCAG 2.1 (pictogramme et étiquette de badge compris), écart entre les pas des palettes et distinction des séries de graphique, en vision normale et en dyschromatopsie.
 
   ```sh
   uv run --no-project python -I skills/charte/outils/contrastes.py
+  uv run --no-project python -I skills/charte/outils/daltonisme.py
   ```
 
   Pour vérifier en plus que la charte reste loin d'une liste locale de couleurs (au format `{"nom": "#RRGGBB"}`), passer `--eviter chemin.json`.

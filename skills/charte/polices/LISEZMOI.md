@@ -11,3 +11,4 @@ Sous-ensemble latin (français compris), téléchargé depuis Fontsource 5.2.6 l
 
 - **Pages web** : `woff2`, déclarés par `@font-face` et servis par le projet lui-même, sans CDN.
 - **Graphiques et documents générés** (matplotlib, PDF) : `ttf`, chargés par chemin. On ne les installe pas sur le poste.
+- **Documents Office** : `ttf` incorporés au .docx (obfusqués) et au .pptx (Embedded OpenType), sous les noms `Sora SemiBold`, `Atkinson Hyperlegible` et `JetBrains Mono` (nom ID 1 de chaque `ttf`) ; recette dans `specimens/office/incorporer.py`. L'OFL permet cette incorporation.

@@ -3,10 +3,14 @@
 Usage : uv run --group specimens python -I specimens/graphiques/rendre.py [--sans-streamlit] [--sans-plotly]
 
 Toutes les couleurs viennent de `dist/` ou de `jetons.charger()`. Écrit dans `specimens/graphiques/rendus/`.
+Règles appliquées (charte v2.1) : étiquette directe dès deux séries en clair et au-delà de quatre en sombre, placée
+sans chevauchement (`placement.placer`) ; un motif par série (tirets, marqueurs, hachures : `MOTIFS` de
+`dist/charte.py`) ; palettes `seq` et `div` pour les aplats contigus ; Streamlit sans `type="primary"`.
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import shutil
@@ -20,11 +24,13 @@ from pathlib import Path
 RACINE = Path(__file__).resolve().parents[2]
 CHARTE = RACINE / "skills" / "charte"
 sys.path.insert(0, str(CHARTE / "outils"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import numpy as np  # noqa: E402
 from couleurs import MACHADO, contraste  # noqa: E402
 from jetons import THEMES, charger  # noqa: E402
 from PIL import Image, ImageDraw, ImageFont  # noqa: E402
+from placement import placer  # noqa: E402
 
 DIST = CHARTE / "dist"
 POLICES = CHARTE / "polices"
@@ -33,10 +39,11 @@ EDGE = Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe")
 CHROME = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 J = charger()
 SERIES = ["Série 1", "Série 2", "Série 3", "Série 4"]
-
-
-def _hex(rvb) -> str:
-    return "#" + "".join(f"{int(x):02X}" for x in rvb)
+_spec = importlib.util.spec_from_file_location("charte_dist", DIST / "charte.py")
+CHARTE_PY = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(CHARTE_PY)
+MOTIFS = CHARTE_PY.MOTIFS
+TAILLE_ETIQUETTE = 11  # pt, étiquettes directes matplotlib
 
 
 def simuler_image(img: Image.Image, vision: str) -> Image.Image:
@@ -68,11 +75,25 @@ def planche(png: Path, theme: str) -> Path:
     return cible
 
 
+def _hex(rvb) -> str:
+    return "#" + "".join(f"{int(x):02X}" for x in rvb)
+
+
 # ---------------------------------------------------------------- matplotlib
-def carte_sequentielle(theme: str):
-    """Aucune palette séquentielle dans les jetons (constat) : dégradé `surface-alt` vers `primaire`, fait pour ce témoin."""
-    from matplotlib.colors import LinearSegmentedColormap
-    return LinearSegmentedColormap.from_list("sequentielle", [J[theme]["surface-alt"], J[theme]["primaire"]])
+def carte(theme: str, palette: str):
+    """Palette discrète des jetons `seq` ou `div` (cinq pas, aplats contigus)."""
+    from matplotlib.colors import ListedColormap
+    return ListedColormap(J[theme][palette], name=palette)
+
+
+def etiquettes_directes(ax, x: float, ys: list[float], noms: list[str], couleurs: list[str], taille: float) -> None:
+    """Étiquette en bout de ligne, sans chevauchement : écart minimal d'une hauteur de ligne (1,25 × taille), en points."""
+    ax.get_ylim()  # fige l'échelle avant la conversion en points
+    fig = ax.figure
+    pts = [ax.transData.transform((x, y))[1] * 72 / fig.dpi for y in ys]
+    for nom, couleur, y, y0, cible in zip(noms, couleurs, ys, pts, placer(pts, taille * 1.25), strict=True):
+        ax.annotate(nom, (x, y), xytext=(8, cible - y0), textcoords="offset points", va="center", color=couleur,
+                    fontsize=taille, fontweight="bold")
 
 
 def rendre_matplotlib(theme: str) -> list[Path]:
@@ -97,36 +118,50 @@ def rendre_matplotlib(theme: str) -> list[Path]:
     fig, ax = plt.subplots(figsize=(10, 6))
     x = np.arange(5)
     for k in range(4):
-        ax.bar(x + (k - 1.5) * 0.2, rng.uniform(3, 9, 5), 0.2, label=SERIES[k])
+        barres = ax.bar(x + (k - 1.5) * 0.2, rng.uniform(3, 9, 5), 0.2, label=SERIES[k], hatch=MOTIFS["mpl_hatch"][k],
+                        edgecolor=t["surface"], linewidth=0.8)
+        ax.bar_label(barres, [f"S{k + 1}"] + [""] * 4, padding=3, color=t["texte"], fontsize=TAILLE_ETIQUETTE, fontweight="bold")
     ax.set_xticks(x, [f"T{n}" for n in range(1, 6)])
-    ax.set_title("Barres groupées, 4 séries")
+    ax.set_title("Barres groupées, 4 séries : hachures et étiquettes directes")
     ax.legend(ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.08), frameon=False)
     sauver(fig, "barres")
 
     fig, ax = plt.subplots(figsize=(10, 6))
     x = np.arange(12)
+    fins = []
     for k in range(8):
         y = np.cumsum(rng.normal(0.3, 1, 12)) + k * 2
-        ax.plot(x, y, linewidth=2, color=t[f"cat-{k + 1}"])
-        ax.annotate(f"Série {k + 1}", (x[-1], y[-1]), xytext=(6, 0), textcoords="offset points", va="center",
-                    color=t["texte"], fontsize=11)
+        ax.plot(x, y, markevery=[len(x) - 1])  # couleur, tiret et marqueur viennent du cycle du style
+        fins.append(y[-1])
     ax.set_xlim(0, 13.5)
-    ax.set_title("Lignes, 8 séries, légende directe")
+    etiquettes_directes(ax, x[-1], fins, [f"Série {k + 1}" for k in range(8)], [t[f"cat-{k + 1}"] for k in range(8)], TAILLE_ETIQUETTE)
+    ax.set_title("Lignes, 8 séries : tirets, marqueurs, étiquettes directes sans chevauchement")
     sauver(fig, "lignes")
 
     fig, ax = plt.subplots(figsize=(10, 6))
     for k in range(4):
         cx, cy = rng.uniform(2, 8, 2)
-        ax.scatter(rng.normal(cx, 1, 40), rng.normal(cy, 1, 40), s=45, label=SERIES[k], edgecolors=t["surface"], linewidths=0.8)
-    ax.set_title("Nuage de points, 4 séries")
+        xs, ys = rng.normal(cx, 1, 40), rng.normal(cy, 1, 40)
+        ax.scatter(xs, ys, s=45, label=SERIES[k], marker=MOTIFS["mpl_marker"][k], edgecolors=t["surface"], linewidths=0.8)
+        ax.annotate(SERIES[k], (xs.mean(), ys.max()), xytext=(0, 8), textcoords="offset points", ha="center", color=t["texte"],
+                    fontsize=TAILLE_ETIQUETTE, fontweight="bold")
+    ax.set_title("Nuage de points, 4 séries : marqueurs et étiquettes directes")
     ax.legend(frameon=False)
     sauver(fig, "nuage")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    m = ax.imshow(rng.uniform(0, 1, (8, 12)), cmap=carte_sequentielle(theme), aspect="auto")
-    ax.grid(False)
-    ax.set_title("Carte de chaleur séquentielle (dégradé fait pour le témoin)")
-    fig.colorbar(m, ax=ax)
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 5.5))
+    for ax_, palette, valeurs, titre in ((a1, "seq", rng.uniform(0, 1, (6, 8)), "Séquentielle (seq-1 à seq-5)"),
+                                         (a2, "div", rng.uniform(-1, 1, (6, 8)), "Divergente (div-1 à div-5)")):
+        borne = (0, 1) if palette == "seq" else (-1, 1)
+        m = ax_.imshow(valeurs, cmap=carte(theme, palette), vmin=borne[0], vmax=borne[1], aspect="auto")
+        ax_.grid(False)
+        ax_.set_title(titre)
+        for (i, k), v in np.ndenumerate(valeurs):  # valeur écrite dans chaque cellule (A6)
+            cellule = _hex(np.round(np.array(m.cmap(m.norm(v))[:3]) * 255))
+            encre = max((J["clair"]["texte"], J["sombre"]["texte"]), key=lambda e: contraste(e, cellule))  # le plus contrasté
+            ax_.text(k, i, f"{v + 0.0:.1f}".replace(".", ",").replace("-0,0", "0,0"), ha="center", va="center", fontsize=9, color=encre)
+        fig.colorbar(m, ax=ax_, ticks=np.linspace(*borne, 6))
+    fig.suptitle("Cartes de chaleur : palettes des jetons, valeur dans chaque cellule", color=t["texte"])
     sauver(fig, "chaleur")
     return fichiers
 
@@ -138,20 +173,34 @@ def rendre_plotly(theme: str) -> list[Path]:
     if not os.environ.get("BROWSER_PATH") and CHROME.exists():
         os.environ["BROWSER_PATH"] = str(CHROME)
     gabarit = go.layout.Template(json.loads((DIST / f"plotly-{theme}.json").read_text(encoding="utf-8")))
+    t = J[theme]
     rng = np.random.default_rng(11)
     fichiers = []
-    barres = go.Figure([go.Bar(name=SERIES[k], x=[f"T{n}" for n in range(1, 6)], y=rng.uniform(3, 9, 5)) for k in range(4)])
-    barres.update_layout(barmode="group", title="Barres groupées (plotly)")
-    lignes = go.Figure([go.Scatter(name=f"Série {k + 1}", x=list(range(12)), y=np.cumsum(rng.normal(0.3, 1, 12)) + 2 * k, mode="lines")
-                        for k in range(8)])
-    lignes.update_layout(title="Lignes, 8 séries (plotly)")
+    largeur, hauteur, marges = 1000, 600, {"l": 60, "r": 120, "t": 80, "b": 60}
+    # motifs trace par trace (les tirets et marqueurs ne passent pas par le gabarit) : MOTIFS de dist/charte.py
+    barres = go.Figure([go.Bar(name=SERIES[k], x=[f"T{n}" for n in range(1, 6)], y=rng.uniform(3, 9, 5), text=[f"S{k + 1}"] * 5,
+                               textposition="inside", insidetextanchor="end", textfont={"color": t["texte"], "size": 13},
+                               marker={"pattern": {"shape": MOTIFS["plotly_pattern"][k], "fgcolor": t["surface"]}}) for k in range(4)])
+    barres.update_layout(barmode="group", title="Barres groupées (plotly) : hachures et étiquettes directes")
+    series = [np.cumsum(rng.normal(0.3, 1, 12)) + 2 * k for k in range(8)]
+    lignes = go.Figure([go.Scatter(name=f"Série {k + 1}", x=list(range(12)), y=y, mode="lines+markers",
+                                   line={"dash": MOTIFS["plotly_dash"][k], "width": 2},
+                                   marker={"symbol": MOTIFS["plotly_symbol"][k], "size": 7}) for k, y in enumerate(series)])
+    bas, haut = min(y.min() for y in series) - 1, max(y.max() for y in series) + 1
+    hauteur_trace = hauteur - marges["t"] - marges["b"]
+    px_fin = [(y[-1] - bas) / (haut - bas) * hauteur_trace for y in series]
+    for k, (y, y0, cible) in enumerate(zip(series, px_fin, placer(px_fin, 17), strict=True)):  # écart d'une ligne, en px
+        lignes.add_annotation(x=11, y=y[-1], text=f"<b>Série {k + 1}</b>", showarrow=False, xanchor="left", xshift=10,
+                              yshift=cible - y0, font={"color": t[f"cat-{k + 1}"], "size": 13})
+    lignes.update_layout(title="Lignes, 8 séries (plotly) : tirets, marqueurs, étiquettes directes", showlegend=False,
+                         yaxis={"range": [bas, haut]}, margin=marges)
     nuage = go.Figure([go.Scatter(name=SERIES[k], x=rng.normal(rng.uniform(2, 8), 1, 40), y=rng.normal(rng.uniform(2, 8), 1, 40),
-                                  mode="markers") for k in range(4)])
-    nuage.update_layout(title="Nuage de points (plotly)")
+                                  mode="markers", marker={"symbol": MOTIFS["plotly_symbol"][k], "size": 9}) for k in range(4)])
+    nuage.update_layout(title="Nuage de points (plotly) : un marqueur par série")
     for nom, fig in (("barres", barres), ("lignes", lignes), ("nuage", nuage)):
         fig.update_layout(template=gabarit)
         p = SORTIE / f"plotly-{nom}-{theme}.png"
-        pio.write_image(fig, p, width=1000, height=600)
+        pio.write_image(fig, p, width=largeur, height=hauteur)
         fichiers.append(p)
     return fichiers
 
@@ -243,22 +292,6 @@ def rendre_streamlit(theme: str = "sombre") -> list[Path]:
     return [cible] if cible.exists() else []
 
 
-def mesurer_bouton(png: Path, theme: str = "sombre") -> None:
-    """Contraste réel du bouton principal : fond = pixels égaux à `primaire`, libellé = pixel le plus clair de la zone."""
-    a = np.asarray(Image.open(png).convert("RGB"))
-    prim = np.array([int(J[theme]["primaire"][i:i + 2], 16) for i in (1, 3, 5)])
-    ys, xs = np.nonzero(np.abs(a.astype(int) - prim).sum(axis=2) < 6)
-    if not len(ys):
-        print("Bouton principal introuvable dans la capture")
-        return
-    garde = (ys < ys.min() + 60) & (xs < xs.min() + 200)  # le bouton : le graphique en dessous réutilise `primaire` (cat-1)
-    ys, xs = ys[garde], xs[garde]
-    zone = a[ys.min():ys.max() + 1, xs.min():xs.max() + 1].reshape(-1, 3)
-    fond, libelle = _hex(prim), _hex(zone[zone.sum(axis=1).argmax()])
-    print(f"Bouton principal : fond {fond}, libellé {libelle}, contraste {contraste(fond, libelle):.2f}:1 "
-          f"(zone x {xs.min()}-{xs.max()}, y {ys.min()}-{ys.max()}) ; fond du bouton sur `fond` {contraste(fond, J[theme]['fond']):.2f}:1")
-
-
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     p.add_argument("--sans-streamlit", action="store_true")
@@ -272,9 +305,10 @@ def main(argv: list[str] | None = None) -> int:
             pngs += [(f, theme) for f in rendre_plotly(theme)]
     for f, theme in pngs:
         planche(f, theme)
+        # poids (~2 Mo au plus pour le dossier) : 256 couleurs, sans tramage, après la planche faite sur l'original
+        Image.open(f).convert("RGB").quantize(colors=256, dither=Image.Dither.NONE).save(f, optimize=True)
     if not args.sans_streamlit:
-        for f in rendre_streamlit("sombre"):
-            mesurer_bouton(f)
+        rendre_streamlit("sombre")
     total = sum(f.stat().st_size for f in SORTIE.glob("*.png"))
     print(f"{len(list(SORTIE.glob('*.png')))} PNG, {total / 1e6:.2f} Mo")
     return 0

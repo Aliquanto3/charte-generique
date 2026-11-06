@@ -82,8 +82,7 @@ def test_readme_temoin_init_mermaid_et_picture():
     assert 'media="(prefers-color-scheme: light)" srcset="banniere-clair.svg"' in texte
     assert 'media="(prefers-color-scheme: dark)" srcset="banniere-sombre.svg"' in texte
     init = re.search(r"%%\{init: (.*)\}%%", texte).group(1)
-    attendu = RACINE / "skills" / "charte" / "dist" / "mermaid-sombre.json"
-    assert json.loads(init) == json.loads(attendu.read_text(encoding="utf-8"))
+    assert json.loads(init) == {"theme": "neutral"}  # A8 : thème neutre, lisible sur les deux pages de GitHub
     for lien in re.findall(r"\]\((rendus/[^)]+)\)", texte):
         assert (DOSSIER / lien).is_file(), lien
 
@@ -100,3 +99,71 @@ def test_badges_lisibles_et_url_ascii():
         texte_badge = "#333333" if (r * 299 + g * 587 + b * 114) / 255000 > 0.69 else "#FFFFFF"
         assert couleurs.contraste(texte_badge, "#" + fond) >= 4.5, fond
         assert couleurs.contraste("#FFFFFF", "#" + etiquette) >= 4.5, etiquette
+
+
+def test_readme_a8_mermaid_et_replis_clairs():
+    """A8 : bloc mermaid `neutral`, deux rendus sous `<picture>` avec repli clair ; bannière en repli clair."""
+    texte = (DOSSIER / "README-temoin.md").read_text(encoding="utf-8")
+    assert '<img alt="Projet témoin" src="banniere-clair.svg">' in texte
+    assert 'srcset="rendus/mermaid-sombre.png"' in texte and 'srcset="rendus/mermaid-clair.png"' in texte
+    assert re.search(r'<img alt="[^"]+" src="rendus/mermaid-clair.png">', texte)
+    assert "themeVariables" not in texte
+    doc = (RACINE / "docs" / "CHARTE.md").read_text(encoding="utf-8")
+    assert "`neutral`" in doc and "<picture>" in doc
+
+
+def test_badges_etiquette_a8():
+    """A8 : étiquette `badge-etiquette` (#646E7B dans les deux thèmes), blanc 5,17:1."""
+    import couleurs
+
+    j = jetons.charger()
+    etiquette = j["clair"]["badge-etiquette"]
+    assert etiquette == j["sombre"]["badge-etiquette"]
+    texte = (DOSSIER / "badges.md").read_text(encoding="utf-8")
+    assert set(re.findall(r"labelColor=([0-9A-F]{6})", texte)) == {etiquette[1:]}
+    assert round(couleurs.contraste("#FFFFFF", etiquette), 2) == 5.17
+
+
+def _textes(nom):
+    racine = ET.parse(DOSSIER / nom).getroot()
+    return [e for e in racine.iter() if e.tag.endswith("text")], racine
+
+
+def test_apercu_social_a11():
+    """A11 : titre ≥ 64 px, aucun texte sous 28 px, tout dans les marges sûres de 80 px, zone centrée, filet or."""
+    textes, racine = _textes("apercu-social.svg")
+    assert (racine.get("width"), racine.get("height")) == ("1280", "640")
+    g = _bannieres()
+    tailles = [float(t.get("font-size")) for t in textes]
+    assert max(tailles) >= g.TITRE_APERCU_MIN == 64 and min(tailles) >= g.TEXTE_APERCU_MIN == 28
+    marge, (largeur, hauteur) = g.MARGE_APERCU, g.APERCU
+    assert marge == 80
+    for t in textes:
+        x, y, taille = float(t.get("x")), float(t.get("y")), float(t.get("font-size"))
+        assert t.get("text-anchor") == "middle" and x == 640  # zone utile centrée
+        demi = len(t.text) * 0.62 * taille / 2  # largeur estimée (Sora 600 : ~0,6 em par signe)
+        assert marge <= x - demi and x + demi <= largeur - marge, t.text
+        assert marge <= y - taille and y <= hauteur - marge, t.text
+    g = next(e for e in racine.iter() if e.tag.endswith("}g"))
+    assert re.search(r"translate\((\d+) (\d+)\)", g.get("transform")).groups() == ("576", "144")
+
+
+@pytest.mark.parametrize("nom", SVGS)
+def test_filet_or_b5(nom):
+    """B5 : filet or (`accent` du thème) sous le titre de chaque bannière et de l'aperçu social."""
+    j = jetons.charger()
+    theme = "clair" if "clair" in nom else "sombre"
+    _, racine = _textes(nom)
+    filets = [e for e in racine.iter() if e.tag.endswith("rect") and e.get("class") == "filet"]
+    assert len(filets) == 1 and filets[0].get("fill") == j[theme]["accent"]
+    titre = max(_textes(nom)[0], key=lambda t: float(t.get("font-size")))
+    assert float(filets[0].get("y")) > float(titre.get("y"))
+
+
+def _bannieres():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("generer_bannieres", DOSSIER / "generer_bannieres.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m

@@ -1,0 +1,31 @@
+# Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.1.0). Style « document » : figure insérée dans un rapport.
+axes.prop_cycle: cycler('color', ['1D5BC2', 'A87A00', '1F8155', 'B83A75', 'C24D1B', '0E7C8C', '6F7378', '8A5A2B']) + cycler('linestyle', ['-', '--', '-.', ':', '-', '--', '-.', ':']) + cycler('marker', ['o', 's', '^', 'D', 'v', 'P', 'X', '*'])
+figure.facecolor: FFFFFF
+figure.edgecolor: FFFFFF
+savefig.facecolor: FFFFFF
+savefig.bbox: tight
+axes.facecolor: FFFFFF
+axes.edgecolor: CED5DF
+axes.labelcolor: 121821
+axes.titlecolor: 121821
+axes.spines.top: False
+axes.spines.right: False
+axes.grid: True
+grid.color: CED5DF
+grid.linewidth: 1
+axes.axisbelow: True
+text.color: 121821
+xtick.color: 4F5A68
+ytick.color: 4F5A68
+font.family: Atkinson Hyperlegible, Segoe UI, Roboto, sans-serif
+font.size: 10.5
+axes.titlesize: 13.5
+legend.facecolor: FFFFFF
+legend.edgecolor: CED5DF
+legend.labelcolor: 121821
+lines.linewidth: 2
+lines.markersize: 5
+axes.titlelocation: left
+legend.frameon: False
+figure.dpi: 200
+savefig.dpi: 200

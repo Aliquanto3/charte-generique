@@ -101,7 +101,7 @@ Gravité : 3 bloquants, 8 importants, 10 mineurs.
   - une légende graduée, ou la valeur écrite dans chaque cellule ;
   - une cellule isolée dans un pas bas porte une bordure `trait-fort` (A5).
 
-  Une 6ᵉ étape plus foncée en clair a été écartée : la candidate `#144290` est trop proche d'une couleur de la liste locale à éviter, et `primaire-vif` `#164A9E` n'est qu'à ΔE 6,9 de `seq-5`. Une palette divergente reste à faire, sur le même principe : `primaire` d'un côté, le corail (`cat-5` après A1) de l'autre.
+  Une 6ᵉ étape plus foncée en clair a été écartée : `primaire-vif` `#164A9E` n'est qu'à ΔE 6,9 de `seq-5`. Une palette divergente reste à faire, sur le même principe : `primaire` d'un côté, le corail (`cat-5` après A1) de l'autre.
 
 **I5. La règle « au-delà de quatre séries » n'est appliquée par aucun gabarit.**
 - Supports :
@@ -238,8 +238,6 @@ Toute nouvelle valeur de cette critique a été contrôlée contre la liste loca
 | a. garder | `#1D5BC2` (L* 41, C* 62, h 289°) | `#8DB0F7` (h 279°) | 6,31:1 et 7,98:1 sur `surface` ; ΔE au plus proche (`cat-7` sombre) 12,1 |
 | b. bleu acier, désaturé | `#1565A8` (L* 42, C* 42, h 273°) | `#8DB8E8` (L* 73, C* 29, h 265°) | 6,07:1 et 8,36:1 sur `surface` ; `sur-primaire` sur le sombre 8,58:1 ; `cat-7` sombre à ΔE 10,2, à la limite |
 | c. bleu pétrole | `#0F5F8C` (h 260°) | `#7CC3E8` (h 244°) | 6,92:1 et 8,92:1, mais ΔE 9,5 avec `cat-6` sombre : il faudrait refaire `cat-6` |
-
-Une option indigo a été écartée : elle était trop proche d'une couleur de la liste locale à éviter.
 
 Recommandation : **a**. Le caractère doit venir de l'or, de Sora et du filet (B5), pas d'un changement de bleu qui coûterait une palette.
 

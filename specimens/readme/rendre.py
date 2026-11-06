@@ -1,5 +1,8 @@
 """Génère badges.md et README-temoin.md, puis les rendus PNG (Edge headless, mmdc si dispo).
 
+Règle README (A8) : diagramme mermaid en thème `neutral` dans le bloc de code, rendus de référence clair et sombre
+sous `<picture>` avec repli clair ; bannière en `<picture>`, repli clair ; étiquette de badge `badge-etiquette`.
+
 Usage : uv run --no-project python -I specimens/readme/rendre.py
 Prérequis : generer_bannieres.py déjà lancé.
 """
@@ -21,7 +24,8 @@ import jetons  # noqa: E402
 ICI = Path(__file__).resolve().parent
 RENDUS = ICI / "rendus"
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-MERMAID = RACINE / "skills" / "charte" / "dist" / "mermaid-sombre.json"
+DIST = RACINE / "skills" / "charte" / "dist"
+INIT_MERMAID = {"theme": "neutral"}  # GitHub : thème neutre, lisible sur les deux pages
 # Couleurs imposées par shields.io (badge-maker), hors charte : servent seulement à mesurer
 # le contraste du texte que shields.io choisira (#fff, ou #333 si luminosité > 0,69).
 BLANC, SOMBRE = "#FFFFFF", "#333333"
@@ -39,7 +43,7 @@ def badges() -> list[dict]:
         "succès": ["succes"], "alerte": ["alerte", "alerte-texte"], "erreur": ["erreur"],
         "info": ["primaire"], "neutre": ["neutre", "texte-attenue"],
     }
-    label = c["encre-pleine"]
+    label = c["badge-etiquette"]  # même valeur dans les deux thèmes : 5,17:1 avec le blanc, se détache des deux pages
     res = []
     for nom, cles in candidats.items():
         for cle in cles:
@@ -70,8 +74,8 @@ def ecrire_badges(bs: list[dict]) -> None:
     for b in bs:
         lignes.append(f"| {b['nom']} | ![{b['nom']}]({url_badge(b)}) | `{b['jeton']}` | `{b['hex']}` | "
                       f"`{b['texte']}` | {b['ratio']:.2f} |")
-    lignes += ["", f"Étiquette (`labelColor`) : jeton `encre-pleine` clair `{bs[0]['label']}`, "
-               f"texte blanc, contraste {bs[0]['ratio_label']:.2f}.", ""]
+    lignes += ["", f"Étiquette (`labelColor`) : jeton `badge-etiquette` `{bs[0]['label']}` (même valeur dans les deux thèmes), "
+               f"texte blanc, contraste {bs[0]['ratio_label']:.2f} ; elle se détache de la page sombre comme de la claire.", ""]
     for b in bs:
         if len(b["essaye"]) > 1:
             lignes.append(f"- {b['nom']} : le jeton `{b['essaye'][0]}` ne passe pas 4,5:1 avec le texte de "
@@ -80,8 +84,7 @@ def ecrire_badges(bs: list[dict]) -> None:
 
 
 def mermaid_init() -> str:
-    data = json.loads(MERMAID.read_text("utf-8"))
-    return "%%{init: " + json.dumps(data, ensure_ascii=False) + "}%%"
+    return "%%{init: " + json.dumps(INIT_MERMAID) + "}%%"
 
 
 DIAGRAMME = """flowchart LR
@@ -92,13 +95,18 @@ DIAGRAMME = """flowchart LR
 
 
 def readme(bs: list[dict], mermaid_png: bool) -> str:
-    rendu = ("[`rendus/mermaid.png`](rendus/mermaid.png) montre l'intention." if mermaid_png
-             else "Rendu `mermaid.png` indisponible (voir `LISEZMOI.md`).")
+    rendu = ("""Rendu de référence aux couleurs de la charte, clair par défaut :
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="rendus/mermaid-sombre.png">
+  <source media="(prefers-color-scheme: light)" srcset="rendus/mermaid-clair.png">
+  <img alt="Diagramme d'architecture" src="rendus/mermaid-clair.png">
+</picture>""" if mermaid_png else "Rendus `mermaid-*.png` indisponibles (voir `LISEZMOI.md`).")
     badges_md = " ".join(f"![{b['nom']}]({url_badge(b)})" for b in bs)
     return f"""<picture>
   <source media="(prefers-color-scheme: dark)" srcset="banniere-sombre.svg">
   <source media="(prefers-color-scheme: light)" srcset="banniere-clair.svg">
-  <img alt="Projet témoin" src="banniere-sombre.svg">
+  <img alt="Projet témoin" src="banniere-clair.svg">
 </picture>
 
 {badges_md}
@@ -112,8 +120,10 @@ Dépôt témoin : un README type pour un projet qui applique la charte génériq
 {DIAGRAMME}
 ```
 
-> Note : GitHub applique une partie seulement des thèmes mermaid (`themeVariables`) et ignore
-> `%%{{init}}%%` dans certains contextes de rendu. {rendu}
+> Le bloc mermaid prend le thème `neutral` : sans fond propre, il reste lisible sur la page claire comme sur la
+> sombre de GitHub.
+
+{rendu}
 
 ## Fonctionnalités
 
@@ -139,7 +149,7 @@ def html_page(theme: str, bs: list[dict], mermaid_png: bool) -> str:
     badges_h = " ".join(
         f'<span class="b"><span class="l">{b["nom"]}</span><span class="v" '
         f'style="background:{b["hex"]};color:{b["texte"]}">{b["jeton"]}</span></span>' for b in bs)
-    diag = ('<img src="rendus/mermaid.png" alt="diagramme" style="max-width:100%">' if mermaid_png
+    diag = (f'<img src="rendus/mermaid-{theme}.png" alt="diagramme" style="max-width:100%">' if mermaid_png
             else f"<pre>{html.escape(DIAGRAMME)}</pre>")
     return f"""<!doctype html><html lang="fr"><meta charset="utf-8"><style>
 body {{ background:{c['fond']}; color:{c['texte']}; font:16px/1.5 {pile}; margin:0; padding:32px; }}
@@ -149,14 +159,14 @@ table {{ border-collapse:collapse; }} td,th {{ border:1px solid {c['trait']}; pa
 th {{ background:{c['surface']}; }}
 blockquote {{ border-left:4px solid {c['trait']}; margin:0; padding:0 16px; color:{c['texte-attenue']}; }}
 .b {{ display:inline-flex; font:12px Verdana,sans-serif; border-radius:3px; overflow:hidden; margin-right:4px; }}
-.l {{ background:{j['clair']['encre-pleine']}; color:{BLANC}; padding:3px 8px; }} .v {{ padding:3px 8px; }}
+.l {{ background:{bs[0]['label']}; color:{BLANC}; padding:3px 8px; }} .v {{ padding:3px 8px; }}
 pre {{ background:{c['surface']}; padding:12px; border-radius:6px; }}
 </style><div class="c">
 <img src="banniere-{theme}.svg" style="width:100%">
 <p>{badges_h}</p>
 <p>Dépôt témoin : un README type pour un projet qui applique la charte générique.</p>
 <h2>Architecture</h2>{diag}
-<blockquote>GitHub applique une partie seulement des thèmes mermaid.</blockquote>
+<blockquote>Bloc mermaid en thème neutral ; rendu de référence aux couleurs du thème.</blockquote>
 <h2>Fonctionnalités</h2>
 <table><tr><th>Fonction</th><th>Statut</th><th>Remarque</th></tr>
 <tr><td>Jetons DTCG</td><td>stable</td><td>source unique</td></tr>
@@ -178,19 +188,22 @@ def capture(src: Path, dest: Path, w: int, h: int) -> None:
 
 
 def mmdc() -> bool:
+    """Rendus de référence `mermaid-sombre.png` et `mermaid-clair.png`, avec `dist/mermaid-<thème>.json`."""
     cfg = RENDUS / "_mermaid-config.json"
     mmd = RENDUS / "_diagramme.mmd"
     pup = RENDUS / "_puppeteer.json"
-    data = json.loads(MERMAID.read_text("utf-8"))
-    cfg.write_text(json.dumps(data), encoding="utf-8")
     # Edge du poste plutôt que le chrome-headless-shell que puppeteer ne télécharge pas
     pup.write_text(json.dumps({"executablePath": EDGE, "headless": "shell"}), encoding="utf-8")
     mmd.write_text(DIAGRAMME + "\n", encoding="utf-8")
     try:
-        subprocess.run(["npx.cmd", "-y", "@mermaid-js/mermaid-cli", "-i", str(mmd), "-o",
-                        str(RENDUS / "mermaid.png"), "-c", str(cfg), "-p", str(pup),
-                        "-b", data["themeVariables"]["background"], "--size", "900"],
-                       check=True, timeout=120, capture_output=True)
+        for theme in ("sombre", "clair"):
+            data = json.loads((DIST / f"mermaid-{theme}.json").read_text("utf-8"))
+            cfg.write_text(json.dumps(data), encoding="utf-8")
+            subprocess.run(["npx.cmd", "-y", "@mermaid-js/mermaid-cli", "-i", str(mmd), "-o",
+                            str(RENDUS / f"mermaid-{theme}.png"), "-c", str(cfg), "-p", str(pup),
+                            "-b", data["themeVariables"]["background"], "--size", "900"],
+                           check=True, timeout=120, capture_output=True)
+        (RENDUS / "mermaid.png").unlink(missing_ok=True)  # rendu unique de la v2.0, remplacé par les deux thèmes
         return True
     except (subprocess.SubprocessError, OSError) as e:
         print("mmdc indisponible :", type(e).__name__, getattr(e, "stderr", b"")[-600:])

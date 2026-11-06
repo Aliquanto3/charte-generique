@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.0.0). -->
+<!-- Généré par generer.py depuis charte.tokens.json — ne pas modifier (version 2.1.0). -->
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Charte générique">
   <a:themeElements>
     <a:clrScheme name="Charte générique">
@@ -10,14 +10,14 @@
       <a:accent1><a:srgbClr val="1D5BC2"/></a:accent1>
       <a:accent2><a:srgbClr val="A87A00"/></a:accent2>
       <a:accent3><a:srgbClr val="1F8155"/></a:accent3>
-      <a:accent4><a:srgbClr val="C24D1B"/></a:accent4>
-      <a:accent5><a:srgbClr val="B83A75"/></a:accent5>
+      <a:accent4><a:srgbClr val="B83A75"/></a:accent4>
+      <a:accent5><a:srgbClr val="C24D1B"/></a:accent5>
       <a:accent6><a:srgbClr val="0E7C8C"/></a:accent6>
       <a:hlink><a:srgbClr val="1D5BC2"/></a:hlink>
       <a:folHlink><a:srgbClr val="164A9E"/></a:folHlink>
     </a:clrScheme>
     <a:fontScheme name="Charte générique">
-      <a:majorFont><a:latin typeface="Sora"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>
+      <a:majorFont><a:latin typeface="Sora SemiBold"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>
       <a:minorFont><a:latin typeface="Atkinson Hyperlegible"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont>
     </a:fontScheme>
     <a:fmtScheme name="Charte générique">

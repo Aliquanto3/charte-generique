@@ -69,3 +69,39 @@ def test_contenu_attendu():
 def test_rendus_presents():
     for nom in RENDUS:
         assert (HTML / "rendus" / nom).stat().st_size > 1000, nom
+
+
+def test_filet_or_sous_le_titre():
+    """B5 : la première page porte le filet or (`accent`) sous son titre."""
+    page = _texte("specimen.html")
+    ouverture = page.split('id="ouverture"', 1)[1].split("</section>", 1)[0]
+    assert 'class="titre-1"' in ouverture and 'class="filet"' in ouverture
+    assert ouverture.index("titre-1") < ouverture.index("filet")
+    assert re.search(r"\.filet \{[^}]*background: var\(--accent\)", _texte("composants.css"))
+
+
+def test_contours_interactifs_trait_fort():
+    """A5 : bouton secondaire, champs, sélecteur et modale en `trait-fort`."""
+    css = _texte("composants.css")
+    for regle in (".bouton-secondaire", ".champ input", ".selecteur select", ".modale {"):
+        bloc = css.split(regle, 1)[1].split("}", 1)[0]
+        assert "var(--trait-fort)" in bloc, regle
+
+
+def test_feuille_impression_a7():
+    """A7 : à l'impression, fonds pleins en contour, intitulés en gras ; un tiret par série dès l'écran."""
+    css = _texte("composants.css")
+    impression = css.split("@media print", 1)[1]
+    assert re.search(r"\.bandeau, \.pastille, \.aplat-or \{ background: none; \}", impression)
+    assert re.search(r"\.bandeau strong[^{]*\{ font-weight: 700; \}", impression)
+    assert "border: var(--trait-largeur) solid var(--couleur)" in impression  # pastille en contour
+    assert len(re.findall(r"stroke-dasharray", css)) >= 3
+
+
+def test_pictogramme_et_nouveaux_jetons():
+    page = _texte("specimen.html")
+    for var in ("--picto-tuile", "--picto-barres", "--picto-point"):
+        assert f"var({var})" in page
+    for jeton in ("trait-fort", "accent-aplat", "badge-etiquette", "seq-1", "seq-5", "div-1", "div-5"):
+        assert f"var(--{jeton})" in page, jeton
+    assert 'class="aplat-or"' in page

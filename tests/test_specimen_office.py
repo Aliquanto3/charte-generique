@@ -1,4 +1,7 @@
-"""Spécimen Office : 6 diapositives, thème de la charte dans les deux paquets, aucune couleur RVB hors jetons."""
+"""Spécimen Office reconstruit (python-pptx, python-docx) : mêmes règles que les paquets livrés.
+
+Les paquets commités de `sortie/` sont contrôlés sans ces bibliothèques par `tests/test_office_paquets.py`.
+"""
 import importlib.util
 import re
 import zipfile
@@ -62,7 +65,7 @@ def test_theme_porte_les_jetons_clairs(paquets, indice, partie):
     for i in range(1, 7):
         assert val(f"accent{i}") == c[f"cat-{i}"]
     polices = racine.find(f"{A}themeElements/{A}fontScheme")
-    assert polices.find(f"{A}majorFont/{A}latin").get("typeface") == "Sora"
+    assert polices.find(f"{A}majorFont/{A}latin").get("typeface") == "Sora SemiBold"
     assert polices.find(f"{A}minorFont/{A}latin").get("typeface") == "Atkinson Hyperlegible"
 
 
@@ -120,20 +123,35 @@ def test_rapport_styles_et_pied(paquets):
     assert len(d.inline_shapes) == 1
 
 
-def test_rendre_en_cours_sur_du_doute_ne_ferme_rien(monkeypatch):
-    """Si tasklist est absent ou échoue, l'application est réputée ouverte (donc jamais fermée)."""
-    import subprocess
-    import sys
+def test_regles_diapositive_a12_a4_b2(paquets):
+    """A12 : titres ≥ 28 pt, au plus six séries, étiquettes de données ; A4 : pictogramme sombre sur la couverture ;
+    B2 : aplat d'or en `accent-aplat` ; B5 : filet or (valeur sombre) sous le titre de couverture."""
+    from pptx import Presentation
 
-    sys.path.insert(0, str(RACINE / "specimens" / "office"))
-    import rendre
+    j = charger()
+    c, s = j["clair"], j["sombre"]
+    prs = Presentation(paquets[0])
+    for diapo in prs.slides:
+        if diapo.shapes.title is not None:
+            assert diapo.shapes.title.text_frame.paragraphs[0].runs[0].font.size.pt >= 28
+    graphiques = [sh.chart for sh in prs.slides[2].shapes if sh.has_chart]
+    assert [len(list(g.plots[0].series)) for g in graphiques] == [4, 6]
+    assert all(g.plots[0].has_data_labels and g.plots[0].data_labels.show_series_name for g in graphiques)
+    with zipfile.ZipFile(paquets[0]) as z:
+        couverture = z.read("ppt/slides/slide1.xml").decode("utf-8")
+        aplat = z.read("ppt/slides/slide5.xml").decode("utf-8")
+    for jeton in ("pictogramme-tuile", "pictogramme-point", "sur-primaire", "accent"):
+        assert f'val="{s[jeton][1:]}"' in couverture, jeton
+    assert f'val="{c["pictogramme-tuile"][1:]}"' not in couverture
+    assert f'val="{c["accent-aplat"][1:]}"' in aplat and f'val="{c["accent"][1:]}"' not in aplat
 
-    def absent(*a, **k):
-        raise FileNotFoundError("tasklist")
 
-    monkeypatch.setattr(subprocess, "run", absent)
-    assert rendre._en_cours("POWERPNT.EXE") is True
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="INFO: aucune tâche", stderr=""))
-    assert rendre._en_cours("POWERPNT.EXE") is False
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="POWERPNT.EXE  1234", stderr=""))
-    assert rendre._en_cours("POWERPNT.EXE") is True
+def test_rapport_filet_or_sous_le_titre(paquets):
+    from docx import Document
+    from docx.oxml.ns import qn
+
+    d = Document(paquets[1])
+    bas = d.styles["Title"].element.pPr.find(qn("w:pBdr")).find(qn("w:bottom"))
+    assert bas.get(qn("w:color")) == charger()["clair"]["accent"][1:]
+    assert int(bas.get(qn("w:sz"))) >= 12
+    assert all(d.styles[n].font.bold is False for n in ("Title", "Heading 1", "Heading 2", "Heading 3"))
