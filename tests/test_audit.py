@@ -171,6 +171,11 @@ def test_selecteur_groupe_garde_le_lien_du_texte(tmp_path):
     assert any("lien" in a and ".article a" in a for a in avert)
 
 
+def test_virgule_dans_parentheses_ne_coupe_pas_le_selecteur(tmp_path):
+    avert = audit.auditer(depot(tmp_path, {"s.css": ":is(nav, aside) a { text-decoration: none; }\n"}))["avertissements"]
+    assert not [a for a in avert if "lien" in a]
+
+
 def test_favicon_et_pictogramme_absents_signales(tmp_path):
     res = audit.auditer(depot(tmp_path, {"index.html": "<html></html>\n"}))
     avert = res["avertissements"]

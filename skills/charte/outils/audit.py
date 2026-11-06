@@ -265,6 +265,20 @@ def classer_police(nom: str, familles: set[str]) -> str | None:
 REGLE_CSS = re.compile(r"([^{}]+)\{([^{}]*)\}")
 SELECTEUR_LIEN = re.compile(r"(?:^|[\s,>+~])a(?![\w-])", re.IGNORECASE)
 HORS_TEXTE = re.compile(r"btn|button|bouton|nav|menu|\btabs?\b|onglet|breadcrumb|ariane|pagination", re.IGNORECASE)  # hors texte courant
+def _sous_selecteurs(sel: str) -> list[str]:
+    """Découpe un groupe de sélecteurs sur les virgules de premier niveau (hors parenthèses et crochets)."""
+    parts, prof, debut = [], 0, 0
+    for i, c in enumerate(sel):
+        if c in "([":
+            prof += 1
+        elif c in ")]":
+            prof = max(0, prof - 1)
+        elif c == "," and prof == 0:
+            parts.append(sel[debut:i])
+            debut = i + 1
+    return parts + [sel[debut:]]
+
+
 COMMANDE_INSTALLER = ('uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/installer.py" '
                       "--cible <dépôt> --supports web --seulement ")
 
@@ -285,7 +299,7 @@ def a_revoir(depot: Path, fichiers: list[tuple[Path, str]], ignorer: list[str] |
         regles = [(m.group(1).strip(), m.group(2), texte.count("\n", 0, m.start(2)) + 1) for m in REGLE_CSS.finditer(texte)]
         souligne = any(SELECTEUR_LIEN.search(s) and re.search(r"underline|border-bottom", c) for s, c, _ in regles)
         for sel, corps, n in regles:
-            if any(SELECTEUR_LIEN.search(x) and not HORS_TEXTE.search(x) for x in sel.split(",")) and not souligne \
+            if any(SELECTEUR_LIEN.search(x) and not HORS_TEXTE.search(x) for x in _sous_selecteurs(sel)) and not souligne \
                     and re.search(r"text-decoration(?:-line)?\s*:\s*none", corps) and not re.search(r"border-bottom", corps):
                 out.append(f"revoir : {rel.as_posix()}:{n} lien (`{sel}`) sans soulignement de remplacement (la charte souligne les liens)")
     return out
