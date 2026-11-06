@@ -1,6 +1,6 @@
 {
   "name": "charte",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Charte graphique générique, sombre d'abord : jetons DTCG, fichiers prêts à l'emploi (CSS, Python, Streamlit, Office, mermaid) et contrôles d'accessibilité.",
   "author": { "name": "Aliquanto3" },
   "repository": "https://github.com/Aliquanto3/charte-generique",

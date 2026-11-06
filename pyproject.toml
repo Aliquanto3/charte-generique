@@ -1,6 +1,6 @@
 [project]
 name = "charte-generique"
-version = "0.1.0"
+version = "1.0.0"
 description = "Charte graphique générique (sombre d'abord) : jetons DTCG, générateurs, contrôles d'accessibilité et skill Claude Code."
 readme = "README.md"
 license = "MIT"
