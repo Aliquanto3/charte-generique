@@ -62,3 +62,44 @@ def test_seuils_de_la_doc_egaux_aux_constantes():
     assert f"aucun texte sous {apercu.TEXTE_APERCU_MIN} px" in doc
     assert f"marges sûres de {apercu.MARGE_APERCU} px" in doc
     assert f"{apercu.APERCU[0]} × {apercu.APERCU[1]}" in doc
+
+
+SKILL_DOC = DOC.with_name("SKILL-CHARTE.md")
+OUTILS = DOC.parent.parent / "skills" / "charte" / "outils"
+OPTIONS_UV = {"--no-project", "--group"}  # options d'uv, pas des outils
+
+
+def _options(outil):
+    return set(re.findall(r'add_argument\(\s*"(--[a-z-]+)"', (OUTILS / f"{outil}.py").read_text(encoding="utf-8")))
+
+
+def test_options_du_skill_existent_dans_les_outils():
+    """Chaque option citée dans SKILL-CHARTE.md existe dans l'argparse d'un outil."""
+    doc = SKILL_DOC.read_text(encoding="utf-8")
+    connues = set().union(*(_options(o) for o in ("audit", "migrer", "installer"))) | {"--help"}
+    citees = set(re.findall(r"(?<![\w\"-])--[a-z]+(?:-[a-z]+)*", doc)) - OPTIONS_UV
+    assert citees, "aucune option citée"
+    assert citees <= connues, citees - connues
+
+
+def test_chaque_option_des_outils_est_documentee():
+    doc = SKILL_DOC.read_text(encoding="utf-8")
+    for outil in ("audit", "migrer", "installer"):
+        for option in _options(outil):
+            assert re.search(rf"(?<![\w-]){option}(?![\w-])", doc), (outil, option)
+
+
+def test_commandes_et_fichiers_du_skill_existent():
+    doc = SKILL_DOC.read_text(encoding="utf-8")
+    racine = DOC.parent.parent
+    chemins = re.findall(r'\$\{CLAUDE_PLUGIN_ROOT\}/(skills/charte/[\w/.-]+)', doc)
+    assert chemins
+    for chemin in chemins:
+        assert (racine / chemin).is_file(), chemin
+    for nom in ("v1-vers-v2.json", "synonymes.json"):
+        assert (racine / "skills" / "charte" / "migrations" / nom).is_file() and f"`{nom}`" in doc, nom
+    marche = (racine / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+    nom_marche = __import__("json").loads(marche)["name"]
+    assert f"claude plugin marketplace add Aliquanto3/{nom_marche}" in doc
+    assert f"claude plugin install charte@{nom_marche}" in doc
+    assert "docs/SKILL-CHARTE.md" in (racine / "README.md").read_text(encoding="utf-8")

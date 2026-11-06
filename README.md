@@ -16,6 +16,13 @@ Charte graphique générique, sombre d'abord, pour des applications web, des rap
 
   Pour vérifier en plus que la charte reste loin d'une liste locale de couleurs (au format `{"nom": "#RRGGBB"}`), passer `--eviter chemin.json`.
 
+- **Skill `charte`** : met un dépôt à la charte (`init`), l'audite (`audit`) et le migre de la v1 vers la v2 (`migrer`). Installation, modes et formats : [`docs/SKILL-CHARTE.md`](docs/SKILL-CHARTE.md).
+
+  ```sh
+  claude plugin marketplace add Aliquanto3/charte-generique
+  claude plugin install charte@charte-generique
+  ```
+
 ## Développement
 
 ```sh
