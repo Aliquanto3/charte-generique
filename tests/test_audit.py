@@ -166,6 +166,11 @@ def test_liens_de_bouton_ou_de_navigation_non_signales(tmp_path):
     assert [a for a in avert if "lien" in a] == ["revoir : style.css:5 lien (`table a`) sans soulignement de remplacement (la charte souligne les liens)"]
 
 
+def test_selecteur_groupe_garde_le_lien_du_texte(tmp_path):
+    avert = audit.auditer(depot(tmp_path, {"s.css": "nav a, .article a { text-decoration: none; }\n"}))["avertissements"]
+    assert any("lien" in a and ".article a" in a for a in avert)
+
+
 def test_favicon_et_pictogramme_absents_signales(tmp_path):
     res = audit.auditer(depot(tmp_path, {"index.html": "<html></html>\n"}))
     avert = res["avertissements"]

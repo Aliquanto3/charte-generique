@@ -285,7 +285,7 @@ def a_revoir(depot: Path, fichiers: list[tuple[Path, str]], ignorer: list[str] |
         regles = [(m.group(1).strip(), m.group(2), texte.count("\n", 0, m.start(2)) + 1) for m in REGLE_CSS.finditer(texte)]
         souligne = any(SELECTEUR_LIEN.search(s) and re.search(r"underline|border-bottom", c) for s, c, _ in regles)
         for sel, corps, n in regles:
-            if SELECTEUR_LIEN.search(sel) and not HORS_TEXTE.search(sel) and not souligne \
+            if any(SELECTEUR_LIEN.search(x) and not HORS_TEXTE.search(x) for x in sel.split(",")) and not souligne \
                     and re.search(r"text-decoration(?:-line)?\s*:\s*none", corps) and not re.search(r"border-bottom", corps):
                 out.append(f"revoir : {rel.as_posix()}:{n} lien (`{sel}`) sans soulignement de remplacement (la charte souligne les liens)")
     return out
