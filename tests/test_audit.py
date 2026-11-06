@@ -141,3 +141,56 @@ def test_selecteurs_js_ignores():
 def test_hsl_negatif_ne_plante_pas():
     assert audit._fonction("hsl", "-10 -20% 150%") == ("#FFFFFF", "")
     assert audit._fonction("hsl", "200 -50% 50%") == ("#808080", "")
+
+
+# --- Recette 2.9 -------------------------------------------------------------
+
+def test_dossiers_d_outils_ignores_par_defaut(tmp_path):
+    css = "a { color: #00FF00; }\n"
+    d = depot(tmp_path, {"app/a.css": css, ".claude/b.css": css, "_bmad-output/c.css": css, "node_modules/x/d.css": css,
+                         ".venv/e.css": css, "archive/f.css": css})
+    res = audit.auditer(d)
+    assert {k["fichier"] for k in res["constats"]} == {"app/a.css"}
+
+
+def test_archive_ignore_a_la_racine_seulement(tmp_path):
+    css = "a { color: #00FF00; }\n"
+    d = depot(tmp_path, {"archive/a.css": css, "archives/b.css": css, "templates/archive/c.css": css, "archive.css": css})
+    assert {k["fichier"] for k in audit.auditer(d)["constats"]} == {"templates/archive/c.css", "archive.css"}
+
+
+def test_liens_de_bouton_ou_de_navigation_non_signales(tmp_path):
+    css = ("nav a { text-decoration: none; }\na.btn { text-decoration: none; }\n.menu > a { text-decoration: none; }\n"
+           ".tabs a { text-decoration: none; }\ntable a { text-decoration: none; }\n")
+    avert = audit.auditer(depot(tmp_path, {"style.css": css}))["avertissements"]
+    assert [a for a in avert if "lien" in a] == ["revoir : style.css:5 lien (`table a`) sans soulignement de remplacement (la charte souligne les liens)"]
+
+
+def test_selecteur_groupe_garde_le_lien_du_texte(tmp_path):
+    avert = audit.auditer(depot(tmp_path, {"s.css": "nav a, .article a { text-decoration: none; }\n"}))["avertissements"]
+    assert any("lien" in a and ".article a" in a for a in avert)
+
+
+def test_virgule_dans_parentheses_ne_coupe_pas_le_selecteur(tmp_path):
+    avert = audit.auditer(depot(tmp_path, {"s.css": ":is(nav, aside) a { text-decoration: none; }\n"}))["avertissements"]
+    assert not [a for a in avert if "lien" in a]
+
+
+def test_favicon_et_pictogramme_absents_signales(tmp_path):
+    res = audit.auditer(depot(tmp_path, {"index.html": "<html></html>\n"}))
+    avert = res["avertissements"]
+    assert any(a.startswith("revoir : aucun favicon") and "--seulement favicon" in a for a in avert)
+    assert any(a.startswith("revoir : aucun pictogramme") and "--seulement pictogramme" in a for a in avert)
+    res = audit.auditer(depot(tmp_path / "b", {"index.html": "<html></html>\n", "static/favicon.svg": "<svg/>", "pictogramme.svg": "<svg/>"}))
+    assert res["avertissements"] == []
+    assert audit.auditer(depot(tmp_path / "c", {"a.css": "a { }\n"}))["avertissements"] == []  # pas de page HTML
+
+
+def test_lien_sans_soulignement_de_remplacement_signale(tmp_path):
+    res = audit.auditer(depot(tmp_path, {"a.css": ".article a {\n  text-decoration: none;\n}\n"}))
+    (a,) = res["avertissements"]
+    assert a == "revoir : a.css:1 lien (`.article a`) sans soulignement de remplacement (la charte souligne les liens)"
+    ok = audit.auditer(depot(tmp_path / "b", {"a.css": "a { text-decoration: none; }\na:hover { text-decoration: underline; }\n"}))
+    assert ok["avertissements"] == []
+    ok2 = audit.auditer(depot(tmp_path / "c", {"a.css": ".btn { text-decoration: none; }\n"}))
+    assert ok2["avertissements"] == []

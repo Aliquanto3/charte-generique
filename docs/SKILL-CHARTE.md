@@ -20,14 +20,15 @@ Dans les commandes ci-dessous, `${CLAUDE_PLUGIN_ROOT}` est la racine du plugin. 
 Dépôt neuf ou sans charte. Le skill demande les supports, puis lance :
 
 ```sh
-uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/installer.py" --cible <dépôt> --supports web,readme [--dossier static/charte] [--forcer]
+uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/installer.py" --cible <dépôt> --supports web,readme [--dossier static/charte] [--forcer] [--seulement polices,favicon,pictogramme]
 ```
 
 - `--supports` : liste séparée par des virgules parmi `web`, `streamlit`, `python`, `office`, `readme`.
 - `--dossier` : dossier de destination dans le dépôt cible.
 - `--forcer` : écrase les fichiers qui existent déjà. Sans lui, l'outil refuse d'écraser.
+- `--seulement` : ne pose que certains groupes parmi ceux des supports demandés : `polices` (polices et licences), `favicon`, `pictogramme`, `css`, ou un nom de fichier exact. Utile pour ajouter les polices manquantes à un dépôt déjà migré : `--supports web --seulement polices`. Un groupe sans fichier correspondant est refusé.
 
-Il copie les fichiers utiles de `dist/` et les polices, avec leurs licences OFL. Il affiche les fichiers posés et l'extrait à ajouter au `CLAUDE.md` du dépôt cible.
+Il copie les fichiers utiles de `dist/` et les polices, avec leurs licences OFL. Les licences se nomment `polices/OFL-<famille en minuscules, sans espace ni tiret>.txt` (`OFL-sora.txt`, `OFL-atkinsonhyperlegible.txt`, `OFL-jetbrainsmono.txt`) : même nom dans la charte et dans le dépôt cible. Il affiche les fichiers posés et l'extrait à ajouter au `CLAUDE.md` du dépôt cible.
 
 ## Mode `audit`
 
@@ -37,7 +38,7 @@ Il ne modifie rien.
 uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/audit.py" <dépôt> [--ignorer GLOB] [--markdown | --json] [--strict]
 ```
 
-- `--ignorer` : motif glob à ignorer, répétable. Par défaut : `dist/`, `node_modules/`, `.venv/` et `*.min.*`.
+- `--ignorer` : motif glob à ignorer, répétable. Par défaut : `dist/`, `node_modules/`, `.venv/`, `.claude/`, `_bmad-output/`, `archive/` et `archives/` à la racine du dépôt seulement (motif `/archive/`) et `*.min.*`. Entre guillemets : `--ignorer "docs/*"` (sinon le shell développe le motif ; sous Git Bash, `set -f` coupe cette expansion).
 - Sortie : tableau texte, ou `--markdown`, ou `--json`. Un résumé chiffré par classe finit le rapport.
 - `--strict` : code de sortie 1 s'il reste des couleurs ou des polices `hors-charte` ou `v1`. Sans lui, le code est 0.
 
@@ -50,6 +51,8 @@ uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/audit.
 | `v1` | Valeur de la charte v1. Le rôle v1 et le rôle v2 cible sont donnés. |
 | `hors-charte` | Tout le reste. Le jeton le plus proche et son ΔE00 sont donnés. |
 
+Des avertissements `revoir` s'ajoutent au rapport (sans effet sur `--strict`) : favicon ou pictogramme absent d'un dépôt qui a des pages HTML (avec la commande `installer.py` à lancer (voir `init`)), et lien du texte courant dont le soulignement est retiré (`text-decoration: none`) sans soulignement de remplacement (les liens de bouton, de navigation, de menu ou d'onglet ne sont pas signalés).
+
 Les polices sont classées `v1` (l'ancienne police de titres) ou `hors-charte` (famille absente des piles de la charte).
 
 ## Mode `migrer`
@@ -60,7 +63,7 @@ uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/migrer
 
 Sans `--appliquer`, rien n'est écrit dans le dépôt : l'outil produit un plan. Avec `--appliquer`, il écrit les remplacements et affiche le nombre de fichiers modifiés. Une deuxième passe ne change rien.
 
-Options : `--plan` (fichier du plan, sinon sortie standard), `--proposer`, `--correspondances`, `--appliquer`, `--ajouter-sombre`, `--ignorer` (comme pour `audit`).
+Options : `--plan` (fichier du plan, sinon sortie standard ; l'outil dit où il l'a écrit, et si c'est dans le dépôt), `--proposer`, `--correspondances`, `--appliquer`, `--ajouter-sombre`, `--clair-d-abord`, `--ignorer` (comme pour `audit`).
 
 Écrire le plan et `corr.json` hors du dépôt cible, pour ne pas les commiter.
 
@@ -84,6 +87,13 @@ Deux statuts :
 
 - `auto` : remplacement sûr, écrit par `--appliquer`. La valeur v1 est sans ambiguïté, ou le nom de la variable correspond au rôle.
 - `revoir` : jamais appliqué, à décider à la main. Cas : rôle qui change de sens, valeur partagée par deux rôles v1 sans nom de variable qui tranche, proposition au jeton le plus proche.
+
+Autres relevés du plan :
+
+- `@font-face` d'une police v1 : la famille, le `src` (nom du fichier de la charte, même dossier) et la graisse (`font-weight`) suivent la charte ; si le fichier est absent du dépôt, le plan donne en `revoir` la commande `installer.py` qui pose les polices (voir `init`).
+- Piles de polices des variables dont le nom contient `police` ou `font` : remplacées par la pile de la charte si elles citent une police v1, sinon `revoir` avec la pile proposée.
+- Variable de couleur utilisée en texte (`color`) et en aplat (`background`) : `revoir` « variable à éclater », avec les usages.
+- Tout aplat `primaire` (nav, puce, badge, bouton) est listé en `revoir`.
 
 Les cas `revoir` qui changent le sens :
 
@@ -115,7 +125,13 @@ Pour les variables, clés ou constantes de couleur que la table v1 ne connaît p
 
 ### `--ajouter-sombre`
 
-Pour un dépôt qui n'a qu'un thème clair. Avec `--appliquer`, l'outil ajoute aux fichiers de style un bloc sombre (`prefers-color-scheme: dark` et `[data-theme="dark"]`) généré depuis les jetons sombres des variables migrées. Sans `--appliquer`, le plan montre le bloc proposé. Si le dépôt a déjà un thème sombre, rien n'est ajouté.
+Pour un dépôt qui n'a qu'un thème clair. Avec `--appliquer`, l'outil ajoute aux fichiers de style un bloc généré depuis les jetons, pour toutes les variables de couleur des blocs `:root` (migrées, ou déjà égales à un jeton clair ; une valeur partagée par plusieurs jetons clairs de contreparties sombres différentes est signalée `revoir`). Sans `--appliquer`, le plan montre le bloc proposé. Si le dépôt a déjà un thème sombre, rien n'est ajouté.
+
+Par défaut le bloc suit la règle « sombre d'abord » : le sombre est dans `:root` (et forcé par `[data-theme="dark"]`), le clair sous `@media (prefers-color-scheme: light)` et `[data-theme="light"]`.
+
+### `--clair-d-abord`
+
+Avec `--ajouter-sombre`, garde l'ancienne structure : le clair reste dans `:root`, le sombre va sous `prefers-color-scheme: dark` et `[data-theme="dark"]`. À réserver aux dépôts dont les pages supposent un défaut clair.
 
 ## Dossier `migrations/`
 

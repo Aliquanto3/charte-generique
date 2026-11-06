@@ -8,6 +8,9 @@ Classes de couleur :
 - `v1` : égale à une valeur de la charte v1 (rôle v1 et rôle v2 cible donnés) ;
 - `hors-charte` : tout le reste (jeton le plus proche et ΔE00 donnés).
 
+Avertissements « revoir » (sans effet sur `--strict`) : favicon ou pictogramme absent d'un dépôt qui a des pages HTML,
+lien dont le soulignement est retiré (`text-decoration: none`) sans soulignement de remplacement.
+
 Polices : `v1` pour Fredoka, `hors-charte` pour toute famille hors des piles de la charte.
 Code de sortie 0, ou 1 avec `--strict` s'il reste du `hors-charte` ou du `v1`.
 Bibliothèque standard seulement.
@@ -32,7 +35,7 @@ from jetons import THEMES, charger  # noqa: E402
 MIGRATIONS = Path(__file__).resolve().parent.parent / "migrations"
 EXTENSIONS = {".css", ".scss", ".html", ".htm", ".svg", ".js", ".mjs", ".jsx", ".ts", ".tsx", ".py", ".toml", ".json", ".md", ".yaml", ".yml"}
 STYLE = {".css", ".scss"}
-IGNORES_DEFAUT = ["dist/", "node_modules/", ".venv/", "*.min.*"]
+IGNORES_DEFAUT = ["dist/", "node_modules/", ".venv/", ".claude/", "_bmad-output/", "/archive/", "/archives/", "*.min.*"]
 TAILLE_MAX = 1_000_000
 SEUIL_PROCHE = 3.0
 
@@ -78,7 +81,10 @@ def valeurs_v1(v1: dict) -> dict[str, list[tuple[str, str]]]:
 
 def _ignore(rel: Path, motifs: list[str]) -> bool:
     for p in motifs:
-        if p.endswith("/"):
+        if p.startswith("/") and p.endswith("/"):  # dossier à la racine du dépôt seulement
+            if len(rel.parts) > 1 and rel.parts[0] == p[1:-1]:
+                return True
+        elif p.endswith("/"):
             if p[:-1] in rel.parts[:-1]:
                 return True
         elif fnmatch.fnmatch(rel.as_posix(), p) or fnmatch.fnmatch(rel.name, p):
@@ -256,13 +262,58 @@ def classer_police(nom: str, familles: set[str]) -> str | None:
     return "v1" if nom in charger_v1()["polices"] else "hors-charte"
 
 
+REGLE_CSS = re.compile(r"([^{}]+)\{([^{}]*)\}")
+SELECTEUR_LIEN = re.compile(r"(?:^|[\s,>+~])a(?![\w-])", re.IGNORECASE)
+HORS_TEXTE = re.compile(r"btn|button|bouton|nav|menu|\btabs?\b|onglet|breadcrumb|ariane|pagination", re.IGNORECASE)  # hors texte courant
+def _sous_selecteurs(sel: str) -> list[str]:
+    """Découpe un groupe de sélecteurs sur les virgules de premier niveau (hors parenthèses et crochets)."""
+    parts, prof, debut = [], 0, 0
+    for i, c in enumerate(sel):
+        if c in "([":
+            prof += 1
+        elif c in ")]":
+            prof = max(0, prof - 1)
+        elif c == "," and prof == 0:
+            parts.append(sel[debut:i])
+            debut = i + 1
+    return parts + [sel[debut:]]
+
+
+COMMANDE_INSTALLER = ('uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/installer.py" '
+                      "--cible <dépôt> --supports web --seulement ")
+
+
+def a_revoir(depot: Path, fichiers: list[tuple[Path, str]], ignorer: list[str] | None) -> list[str]:
+    """Avertissements `revoir` : favicon et pictogramme absents, liens sans soulignement."""
+    out = []
+    motifs = IGNORES_DEFAUT + list(ignorer or [])
+    noms = {p.name.lower() for p in lister(depot) if not _ignore(p, motifs)}
+    if any(r.suffix.lower() in (".html", ".htm") for r, _ in fichiers):
+        if not any(n.startswith("favicon.") for n in noms):
+            out.append(f"revoir : aucun favicon dans le dépôt (`{COMMANDE_INSTALLER}favicon`)")
+        if not any(n.startswith("pictogramme.") for n in noms):
+            out.append(f"revoir : aucun pictogramme dans le dépôt (`{COMMANDE_INSTALLER}pictogramme`)")
+    for rel, texte in fichiers:
+        if rel.suffix.lower() not in STYLE | {".html", ".htm"}:
+            continue
+        regles = [(m.group(1).strip(), m.group(2), texte.count("\n", 0, m.start(2)) + 1) for m in REGLE_CSS.finditer(texte)]
+        souligne = any(SELECTEUR_LIEN.search(s) and re.search(r"underline|border-bottom", c) for s, c, _ in regles)
+        for sel, corps, n in regles:
+            if any(SELECTEUR_LIEN.search(x) and not HORS_TEXTE.search(x) for x in _sous_selecteurs(sel)) and not souligne \
+                    and re.search(r"text-decoration(?:-line)?\s*:\s*none", corps) and not re.search(r"border-bottom", corps):
+                out.append(f"revoir : {rel.as_posix()}:{n} lien (`{sel}`) sans soulignement de remplacement (la charte souligne les liens)")
+    return out
+
+
 def auditer(depot: Path, ignorer: list[str] | None = None) -> dict:
     jetons, v1 = charger(), charger_v1()
     pal, v1val = palette(jetons), valeurs_v1(v1)
     familles = {f for r in jetons["police"].values() for f in r["familles"]}
     constats: list[dict] = []
     avertissements: list[str] = []
-    for rel, texte in lire_fichiers(depot, ignorer, avertissements=avertissements):
+    fichiers = lire_fichiers(depot, ignorer, avertissements=avertissements)
+    avertissements += a_revoir(depot, fichiers, ignorer)
+    for rel, texte in fichiers:
         ext = rel.suffix.lower()
         for n, ligne in enumerate(texte.splitlines(), 1):
             for c in couleurs_ligne(ligne, ext):

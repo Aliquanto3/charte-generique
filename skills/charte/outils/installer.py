@@ -1,8 +1,10 @@
 """Installe la charte dans un dépôt cible : fichiers de `dist/` et polices utiles, avec les licences OFL.
 
 Usage : uv run --no-project python -I installer.py --cible <dépôt> --supports web,streamlit,python,office,readme
-        [--dossier static/charte] [--forcer]
+        [--dossier static/charte] [--forcer] [--seulement polices,favicon,pictogramme]
 
+`--seulement` ne garde que certains groupes : `polices` (polices et licences), `favicon`, `pictogramme`, `css`,
+ou un nom de fichier exact. Licences : `polices/OFL-<famille en minuscules, sans espace ni tiret>.txt`.
 N'écrase rien sans `--forcer`. Affiche les fichiers posés et l'extrait à coller dans le `CLAUDE.md` du dépôt cible.
 Bibliothèque standard seulement.
 """
@@ -29,6 +31,25 @@ SUPPORTS: dict[str, dict[str, list[str]]] = {
 LICENCES = ["OFL-sora.txt", "OFL-atkinsonhyperlegible.txt", "OFL-jetbrainsmono.txt"]
 
 
+GROUPES = {
+    "polices": lambda k: k.startswith("polices/"),
+    "favicon": lambda k: k.startswith("favicon."),
+    "pictogramme": lambda k: k.startswith("pictogramme."),
+    "css": lambda k: k.endswith(".css"),
+}
+
+
+def filtrer(fichiers: dict[str, Path], seulement: list[str]) -> dict[str, Path]:
+    """Garde les fichiers d'un des groupes (ou noms exacts) demandés ; refuse un groupe inconnu ou qui ne retient rien."""
+    out: dict[str, Path] = {}
+    for g in seulement:
+        sel = {k: v for k, v in fichiers.items() if (GROUPES[g](k) if g in GROUPES else k == g)}
+        if not sel:
+            raise ValueError(f"--seulement {g} : aucun fichier correspondant dans ces supports (groupes : {', '.join(GROUPES)})")
+        out.update(sel)
+    return out
+
+
 def plan(supports: list[str]) -> dict[str, Path]:
     """Destination relative → source, pour les supports demandés."""
     inconnus = [s for s in supports if s not in SUPPORTS]
@@ -46,8 +67,12 @@ def plan(supports: list[str]) -> dict[str, Path]:
     return out
 
 
-def installer(cible: Path, supports: list[str], dossier: str, forcer: bool) -> list[str]:
+def installer(cible: Path, supports: list[str], dossier: str, forcer: bool, seulement: list[str] | None = None) -> list[str]:
     fichiers = plan(supports)
+    if seulement is not None:
+        if not seulement:
+            raise ValueError(f"--seulement vide : donner au moins un groupe ({', '.join(GROUPES)}) ou un nom de fichier")
+        fichiers = filtrer(fichiers, seulement)
     base = cible / dossier
     existants = [k for k in fichiers if (base / k).exists()]
     if existants and not forcer:
@@ -72,10 +97,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--supports", required=True, help="liste séparée par des virgules : " + ",".join(SUPPORTS))
     ap.add_argument("--dossier", default="static/charte")
     ap.add_argument("--forcer", action="store_true")
+    ap.add_argument("--seulement", help="groupes à installer, séparés par des virgules : " + ",".join(GROUPES))
     a = ap.parse_args(argv)
     supports = [s.strip() for s in a.supports.split(",") if s.strip()]
+    seulement = [s.strip() for s in a.seulement.split(",") if s.strip()] if a.seulement is not None else None
     try:
-        poses = installer(a.cible, supports, a.dossier, a.forcer)
+        poses = installer(a.cible, supports, a.dossier, a.forcer, seulement)
     except (ValueError, FileExistsError) as e:
         print(f"Erreur : {e}", file=sys.stderr)
         return 1

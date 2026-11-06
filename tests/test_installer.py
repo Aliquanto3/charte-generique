@@ -47,3 +47,31 @@ def test_sources_existent():
 def test_plan_rejette_support_inconnu():
     with pytest.raises(ValueError):
         installer.plan(["x"])
+
+
+def test_seulement_polices_favicon_pictogramme(tmp_path):
+    args = ["--cible", str(tmp_path), "--supports", "web", "--seulement", "polices,favicon,pictogramme"]
+    assert installer.main(args) == 0
+    base = tmp_path / "static" / "charte"
+    assert sorted(p.relative_to(base).as_posix() for p in base.rglob("*") if p.is_file()) == sorted(
+        [f"polices/{n}" for n in [*installer.WOFF2, *installer.LICENCES]] + ["favicon.svg", "pictogramme.svg"])
+    assert not (base / "charte.css").exists()
+
+
+def test_seulement_inconnu_ou_vide_refuse(tmp_path, capsys):
+    assert installer.main(["--cible", str(tmp_path), "--supports", "readme", "--seulement", "polices"]) == 1
+    assert "aucun fichier correspondant" in capsys.readouterr().err
+    assert installer.main(["--cible", str(tmp_path), "--supports", "web", "--seulement", "css"]) == 0
+    assert sorted(p.name for p in (tmp_path / "static" / "charte").iterdir()) == ["charte-base.css", "charte.css"]
+    for vide in [",", "", " , "]:
+        assert installer.main(["--cible", str(tmp_path / "v"), "--supports", "web", "--seulement", vide]) == 1
+        assert "--seulement vide" in capsys.readouterr().err
+    assert not (tmp_path / "v").exists()
+
+
+def test_licences_nommees_selon_la_convention():
+    """polices/OFL-<famille en minuscules, sans espace ni tiret>.txt, pour chaque famille de la charte."""
+    from jetons import charger
+    attendu = {"OFL-" + r["familles"][0].lower().replace(" ", "").replace("-", "") + ".txt" for r in charger()["police"].values()}
+    assert attendu == set(installer.LICENCES)
+    assert all((installer.POLICES / n).is_file() for n in attendu)

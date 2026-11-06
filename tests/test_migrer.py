@@ -223,13 +223,13 @@ def test_clair_seul_propose_puis_ajoute_le_bloc_sombre(tmp_path, capsys):
     d = depot(tmp_path / "depot", {"a.css": MAISON})
     lancer(d, "--proposer", "--plan", str(tmp_path / "plan.md"))
     p = (tmp_path / "plan.md").read_text(encoding="utf-8")
-    assert "Aucun thème sombre détecté" in p and '[data-theme="dark"]' in p and "prefers-color-scheme: dark" in p
+    assert "Aucun thème sombre détecté" in p and '[data-theme="dark"]' in p and "prefers-color-scheme: light" in p
     assert lire(d, "a.css") == MAISON
     lancer(d, "--proposer", "--appliquer", "--ajouter-sombre")
     css = lire(d, "a.css")
-    bloc = css[css.index("/* Thème sombre"):]
-    assert "prefers-color-scheme: dark" in bloc and '[data-theme="dark"]' in bloc
-    valeurs = {ligne.split(":")[1].strip(" ;") for ligne in bloc.splitlines() if ligne.strip().startswith("--")}
+    bloc = css[css.index("/* Sombre d'abord"):]
+    assert "prefers-color-scheme: light" in bloc and '[data-theme="dark"]' in bloc
+    valeurs = {ligne.split(":")[1].strip(" ;") for ligne in bloc[:bloc.index("@media")].splitlines() if ligne.strip().startswith("--")}
     assert valeurs <= {v for v in J["sombre"].values() if isinstance(v, str)}
     assert J["sombre"]["surface"] in valeurs and J["sombre"]["texte"] in valeurs
     capsys.readouterr()
@@ -270,7 +270,7 @@ def test_classe_dark_header_ni_fichier_darkroom_ne_basculent_le_theme(tmp_path):
 def test_plan_dans_le_depot_n_est_pas_un_theme_sombre(tmp_path):
     d = depot(tmp_path, {"a.css": MAISON})
     lancer(d, "--proposer", "--plan", str(d / "plan.md"))
-    assert "prefers-color-scheme: dark" in lire(d, "plan.md")
+    assert "prefers-color-scheme: light" in lire(d, "plan.md")
     res = migrer.planifier(d, [], migrer.Contexte(None, True))
     assert not res["sombre_present"] and res["blocs"]
     lancer(d, "--proposer", "--plan", str(d / "plan.md"))
@@ -282,3 +282,123 @@ def test_encodage_cp1252_conserve_a_l_ecriture(tmp_path):
     (tmp_path / "a.css").write_bytes(f"/* thème */ :root {{ --color-primary: {p}; }}\n".encode("cp1252"))
     lancer(tmp_path, "--appliquer")
     assert (tmp_path / "a.css").read_bytes().decode("cp1252") == f"/* thème */ :root {{ --color-primary: {v2('clair', 'primaire')}; }}\n"
+
+
+# --- Recette 2.9 -------------------------------------------------------------
+
+def bloc_apres(css, debut):
+    return css[css.index(debut):]
+
+
+def test_sombre_d_abord_par_defaut(tmp_path):
+    d = depot(tmp_path, {"a.css": ":root { --encre: #202020; --primaire: #345678; }\n"})
+    lancer(d, "--proposer", "--appliquer", "--ajouter-sombre")
+    css = lire(d, "a.css")
+    _, _, bas = css.partition("/* Sombre d'abord")
+    assert "prefers-color-scheme: dark" not in css
+    racine, _, media = bas.partition("@media (prefers-color-scheme: light)")
+    assert ':root,\n[data-theme="dark"] {' in racine
+    assert f"--encre: {v2('sombre', 'texte')};" in racine
+    assert f"--primaire: {v2('sombre', 'primaire')};" in racine
+    clair, _, light = media.partition('[data-theme="light"] {')
+    assert ':root:not([data-theme="dark"])' in clair
+    assert f"--primaire: {v2('clair', 'primaire')};" in clair
+    assert f"--primaire: {v2('clair', 'primaire')};" in light
+
+
+def test_clair_d_abord_garde_l_ancienne_structure(tmp_path):
+    d = depot(tmp_path, {"a.css": ":root { --encre: #202020; }\n"})
+    lancer(d, "--proposer", "--appliquer", "--ajouter-sombre", "--clair-d-abord")
+    bloc = bloc_apres(lire(d, "a.css"), "/* Thème sombre")
+    assert "@media (prefers-color-scheme: dark)" in bloc and '[data-theme="dark"] {' in bloc
+    assert "prefers-color-scheme: light" not in bloc
+
+
+def test_variable_deja_egale_a_un_jeton_clair_recoit_son_sombre(tmp_path):
+    d = depot(tmp_path, {"a.css": f":root {{ --carte: {v2('clair', 'surface')}; --encre: #202020; }}\n"})
+    lancer(d, "--proposer", "--appliquer", "--ajouter-sombre")
+    bloc = bloc_apres(lire(d, "a.css"), "/* Sombre d'abord")
+    assert f"  --carte: {v2('sombre', 'surface')};" in bloc.split("@media")[0]
+    assert f"    --carte: {v2('clair', 'surface')};" in bloc
+
+
+def test_valeur_egale_a_plusieurs_jetons_clairs_est_signalee_revoir(tmp_path):
+    d = depot(tmp_path, {"a.css": ":root { --zzz: #FFFFFF; }\n"})
+    e = [x for x in plan(d) if x["ancien"] == "#FFFFFF"]
+    assert len(e) == 1 and e[0]["statut"] == "revoir" and "contrepartie sombre à choisir" in e[0]["note"]
+    res = migrer.planifier(d, [], migrer.Contexte(None, False))
+    assert res["blocs"] == {}
+
+
+def test_variable_a_eclater_texte_et_aplat(tmp_path):
+    css = (":root { --accent-x: #345678; --seul: #345678; }\n"
+           "a { color: var(--accent-x); }\n.puce { background: var(--accent-x); }\n.t { color: var(--seul); }\n")
+    e = [x for x in plan(depot(tmp_path, {"a.css": css})) if x["nouveau"] == "(à éclater)"]
+    assert [x["ancien"] for x in e] == ["--accent-x"] and e[0]["statut"] == "revoir" and e[0]["ligne"] == 1
+    assert "texte : a.css:2 (color)" in e[0]["note"] and "aplat : a.css:3 (background)" in e[0]["note"]
+
+
+FACE_V1 = """@font-face {
+  font-family: "Fredoka";
+  src: url("fonts/fredoka-regular.woff2") format("woff2");
+  font-weight: 400;
+}
+:root { --police-titres: 'Fredoka', cursive; --police-texte: Arial, sans-serif; --taille-police: 16px; }
+"""
+
+
+def test_font_face_renomme_famille_src_et_graisse(tmp_path):
+    d = depot(tmp_path, {"a.css": FACE_V1})
+    lancer(d, "--appliquer")
+    css = lire(d, "a.css")
+    assert 'font-family: "Sora";' in css and 'url("fonts/sora-latin-600-normal.woff2")' in css and "font-weight: 600;" in css
+    assert f"--police-titres: {J['police']['titres']['pile']};" in css
+    assert "--police-texte: Arial, sans-serif;" in css and "--taille-police: 16px;" in css  # revoir, jamais appliqué
+    apres = css
+    lancer(d, "--appliquer")
+    assert lire(d, "a.css") == apres
+
+
+def test_font_face_police_absente_donne_la_commande_installer(tmp_path):
+    d = depot(tmp_path, {"a.css": FACE_V1})
+    e = plan(d, proposer=True)
+    absent = [x for x in e if "absent du dépôt" in x["note"]]
+    assert len(absent) == 1 and "installer.py" in absent[0]["note"] and "--seulement polices" in absent[0]["note"]
+    d2 = depot(tmp_path / "b", {"a.css": FACE_V1, "fonts/sora-latin-600-normal.woff2": "x"})
+    assert not [x for x in plan(d2) if "absent du dépôt" in x["note"]]
+
+
+def test_pile_hors_charte_proposee_en_revoir(tmp_path):
+    e = [x for x in plan(depot(tmp_path, {"a.css": FACE_V1})) if x["ancien"] == "Arial, sans-serif"]
+    assert e[0]["statut"] == "revoir" and e[0]["nouveau"] == J["police"]["texte"]["pile"]
+
+
+def test_aplat_primaire_hors_bouton_est_liste(tmp_path):
+    css = ":root { --primaire: #345678; }\nnav { background: var(--primaire); }\n.badge { background-color: var(--primaire); }\n"
+    e = [x for x in plan(depot(tmp_path, {"a.css": css})) if x["nouveau"] == "(à décider)"]
+    assert [x["ligne"] for x in e] == [2, 3] and all(x["statut"] == "revoir" for x in e)
+    assert "`nav`" in e[0]["note"] and "`.badge`" in e[1]["note"]
+
+
+def test_message_du_plan_dit_ou_il_est_ecrit(tmp_path, capsys):
+    d = depot(tmp_path / "depot", {"a.css": MAISON})
+    dehors = tmp_path / "plan.md"
+    lancer(d, "--plan", str(dehors))
+    assert f"Plan écrit dans {dehors} (hors du dépôt : rien à commiter)" in capsys.readouterr().out
+    lancer(d, "--plan", str(d / "plan.md"))
+    assert "(dans le dépôt : ne le commitez pas)" in capsys.readouterr().out
+
+
+def test_font_face_plusieurs_graisses_double_signale(tmp_path):
+    css = ('@font-face {\n  font-family: Fredoka;\n  font-weight: 400;\n  src: url(f/fredoka-400.woff2);\n}\n'
+           '@font-face {\n  font-family: Fredoka;\n  font-weight: 700;\n  src: url(f/fredoka-700.woff2);\n}\n'
+           '@font-face {\n  font-family: Fredoka;\n  font-style: italic;\n  font-weight: 400;\n  src: url(f/fredoka-i.woff2);\n}\n')
+    doubles = [x for x in plan(depot(tmp_path, {"a.css": css})) if x["nouveau"] == "(à supprimer)"]
+    assert [x["ligne"] for x in doubles] == [6] and doubles[0]["statut"] == "revoir"
+    assert "graisse d'origine 700" in doubles[0]["note"] and "ligne 1" in doubles[0]["note"]
+
+
+def test_pile_de_police_garde_important(tmp_path):
+    d = depot(tmp_path, {"a.css": ":root { --police-titres: 'Fredoka', cursive !important; }\n"})
+    lancer(d, "--appliquer")
+    assert lire(d, "a.css") == f":root {{ --police-titres: {J['police']['titres']['pile']} !important; }}\n"
