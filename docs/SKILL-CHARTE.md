@@ -39,7 +39,7 @@ uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/audit.
 
 - `--ignorer` : motif glob à ignorer, répétable. Par défaut : `dist/`, `node_modules/`, `.venv/` et `*.min.*`.
 - Sortie : tableau texte, ou `--markdown`, ou `--json`. Un résumé chiffré par classe finit le rapport.
-- `--strict` : code de sortie 1 s'il reste des couleurs `hors-charte` ou `v1`. Sans lui, le code est 0.
+- `--strict` : code de sortie 1 s'il reste des couleurs ou des polices `hors-charte` ou `v1`. Sans lui, le code est 0.
 
 ### Classes
 
@@ -78,7 +78,7 @@ Un tableau markdown, une ligne par remplacement :
 | Fichier | Ligne | Ancien | Nouveau | Rôle | Statut | Note |
 |---|---|---|---|---|---|---|
 
-Il finit par un résumé (« N remplacement(s) automatique(s), M à revoir à la main ») et, s'il y en a, par une section d'avertissements (fichier lu en cp1252, encodage illisible).
+Il contient ensuite un résumé (« N remplacement(s) automatique(s), M à revoir à la main »), s'il y en a une section d'avertissements (fichier lu en cp1252, encodage illisible), et finit par une section « Thème sombre » (bloc proposé, ou absence de thème sombre détecté).
 
 Deux statuts :
 
@@ -103,7 +103,7 @@ Un objet JSON `{"--nom-de-variable": "role-v2"}`. Il est prioritaire sur le rest
 ```
 
 - Une valeur de type chaîne est un rôle v2 de la charte. Le remplacement est `auto`.
-- Une valeur `null` demande de supprimer la variable. Si elle n'est plus utilisée dans le dépôt, la ligne est supprimée (`auto`). Si elle l'est encore, elle est conservée et signalée en `revoir`, avec le nombre d'usages.
+- Une valeur `null` demande de supprimer la variable. Si elle n'est plus utilisée dans le dépôt, la ligne est supprimée (`auto`) dans les fichiers de style ; dans les autres fichiers, le plan émet `revoir` (« variable à supprimer à la main »). Si elle l'est encore, elle est conservée et signalée en `revoir`, avec le nombre d'usages.
 - La clé s'écrit avec ou sans les tirets initiaux.
 
 ### `--proposer`
