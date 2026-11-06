@@ -69,7 +69,9 @@ def plan(supports: list[str]) -> dict[str, Path]:
 
 def installer(cible: Path, supports: list[str], dossier: str, forcer: bool, seulement: list[str] | None = None) -> list[str]:
     fichiers = plan(supports)
-    if seulement:
+    if seulement is not None:
+        if not seulement:
+            raise ValueError(f"--seulement vide : donner au moins un groupe ({', '.join(GROUPES)}) ou un nom de fichier")
         fichiers = filtrer(fichiers, seulement)
     base = cible / dossier
     existants = [k for k in fichiers if (base / k).exists()]
@@ -98,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--seulement", help="groupes à installer, séparés par des virgules : " + ",".join(GROUPES))
     a = ap.parse_args(argv)
     supports = [s.strip() for s in a.supports.split(",") if s.strip()]
-    seulement = [s.strip() for s in a.seulement.split(",") if s.strip()] if a.seulement else None
+    seulement = [s.strip() for s in a.seulement.split(",") if s.strip()] if a.seulement is not None else None
     try:
         poses = installer(a.cible, supports, a.dossier, a.forcer, seulement)
     except (ValueError, FileExistsError) as e:

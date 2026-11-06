@@ -35,7 +35,7 @@ from jetons import THEMES, charger  # noqa: E402
 MIGRATIONS = Path(__file__).resolve().parent.parent / "migrations"
 EXTENSIONS = {".css", ".scss", ".html", ".htm", ".svg", ".js", ".mjs", ".jsx", ".ts", ".tsx", ".py", ".toml", ".json", ".md", ".yaml", ".yml"}
 STYLE = {".css", ".scss"}
-IGNORES_DEFAUT = ["dist/", "node_modules/", ".venv/", ".claude/", "_bmad-output/", "archive/", "archives/", "*.min.*"]
+IGNORES_DEFAUT = ["dist/", "node_modules/", ".venv/", ".claude/", "_bmad-output/", "/archive/", "/archives/", "*.min.*"]
 TAILLE_MAX = 1_000_000
 SEUIL_PROCHE = 3.0
 
@@ -81,7 +81,10 @@ def valeurs_v1(v1: dict) -> dict[str, list[tuple[str, str]]]:
 
 def _ignore(rel: Path, motifs: list[str]) -> bool:
     for p in motifs:
-        if p.endswith("/"):
+        if p.startswith("/") and p.endswith("/"):  # dossier à la racine du dépôt seulement
+            if len(rel.parts) > 1 and rel.parts[0] == p[1:-1]:
+                return True
+        elif p.endswith("/"):
             if p[:-1] in rel.parts[:-1]:
                 return True
         elif fnmatch.fnmatch(rel.as_posix(), p) or fnmatch.fnmatch(rel.name, p):
@@ -261,6 +264,7 @@ def classer_police(nom: str, familles: set[str]) -> str | None:
 
 REGLE_CSS = re.compile(r"([^{}]+)\{([^{}]*)\}")
 SELECTEUR_LIEN = re.compile(r"(?:^|[\s,>+~])a(?![\w-])", re.IGNORECASE)
+HORS_TEXTE = re.compile(r"btn|button|bouton|nav|menu|\btabs?\b|onglet|breadcrumb|ariane|pagination", re.IGNORECASE)  # hors texte courant
 COMMANDE_INSTALLER = ('uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/installer.py" '
                       "--cible <dépôt> --supports web --seulement ")
 
@@ -281,8 +285,8 @@ def a_revoir(depot: Path, fichiers: list[tuple[Path, str]], ignorer: list[str] |
         regles = [(m.group(1).strip(), m.group(2), texte.count("\n", 0, m.start(2)) + 1) for m in REGLE_CSS.finditer(texte)]
         souligne = any(SELECTEUR_LIEN.search(s) and re.search(r"underline|border-bottom", c) for s, c, _ in regles)
         for sel, corps, n in regles:
-            if SELECTEUR_LIEN.search(sel) and re.search(r"text-decoration(?:-line)?\s*:\s*none", corps) and not re.search(r"border-bottom", corps) \
-                    and not souligne:
+            if SELECTEUR_LIEN.search(sel) and not HORS_TEXTE.search(sel) and not souligne \
+                    and re.search(r"text-decoration(?:-line)?\s*:\s*none", corps) and not re.search(r"border-bottom", corps):
                 out.append(f"revoir : {rel.as_posix()}:{n} lien (`{sel}`) sans soulignement de remplacement (la charte souligne les liens)")
     return out
 

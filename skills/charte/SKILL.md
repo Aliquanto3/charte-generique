@@ -30,7 +30,7 @@ Règles de la charte (le détail et les valeurs sont dans `${CLAUDE_PLUGIN_ROOT}
 uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/audit.py" <dépôt> [--ignorer GLOB] [--markdown | --json] [--strict]
 ```
 
-Ignorés par défaut : `dist/`, `node_modules/`, `.venv/`, `.claude/`, `_bmad-output/`, `archive/`, `archives/`, `*.min.*`. Les motifs de `--ignorer` se mettent entre guillemets (`--ignorer "docs/*"`) ; sous Git Bash, `set -f` coupe l'expansion des motifs par le shell.
+Ignorés par défaut : `dist/`, `node_modules/`, `.venv/`, `.claude/`, `_bmad-output/`, `archive/` et `archives/` à la racine du dépôt seulement (motif `/archive/`), `*.min.*`. Les motifs de `--ignorer` se mettent entre guillemets (`--ignorer "docs/*"`) ; sous Git Bash, `set -f` coupe l'expansion des motifs par le shell.
 
 Au-delà des couleurs et des polices, vérifie aussi le reste de la charte : logotype, favicon (l'audit signale son absence), filet or, pictogramme (sur fond sombre, version du thème sombre), et liens soulignés (l'audit signale un `text-decoration: none` sans soulignement de remplacement). Ces avertissements sont des `revoir`.
 

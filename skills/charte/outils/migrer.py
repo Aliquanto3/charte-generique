@@ -231,6 +231,7 @@ def migrer_faces(ctx: Contexte, rel: Path, texte: str, noms_depot: set[str], ent
         i = bisect.bisect_right(starts, off) - 1
         return i, off - starts[i]
 
+    premieres: dict[tuple[str, str], int] = {}  # (rôle, font-style) → ligne de la première face migrée
     for m in FACE.finditer(texte):
         bloc, base = m.group(), m.start()
         fam = re.search(r"font-family\s*:\s*([^;}]+)", bloc, re.IGNORECASE)
@@ -240,6 +241,15 @@ def migrer_faces(ctx: Contexte, rel: Path, texte: str, noms_depot: set[str], ent
         p = ctx.jetons["police"][role]
         stem = re.sub(r"\s+", "-", p["familles"][0].lower()) + f"-latin-{p['graisse']}-normal"
         poids = re.search(r"(font-weight\s*:\s*)([^;}\n]*[^;}\s])", bloc, re.IGNORECASE)
+        style_f = re.search(r"font-style\s*:\s*([\w-]+)", bloc, re.IGNORECASE)
+        cle = (role, style_f.group(1).lower() if style_f else "normal")
+        if cle in premieres:
+            origine = poids.group(2) if poids else "absente"
+            entrees.append(_entree(f, pos(base)[0] + 1, "@font-face", "(à supprimer)", f"police:{role}", "revoir",
+                                   f"face en double après migration (graisse d'origine {origine}) : la charte n'a que la graisse "
+                                   f"{p['graisse']} pour `{role}`, déjà déclarée ligne {premieres[cle]} ; supprimer ce bloc"))
+        else:
+            premieres[cle] = pos(base)[0] + 1
         if not poids:
             entrees.append(_entree(f, pos(base)[0] + 1, "@font-face", f"font-weight: {p['graisse']}", f"police:{role}", "revoir",
                                    "font-weight absent : à ajouter"))
@@ -389,7 +399,7 @@ def planifier(depot: Path, ignorer: list[str], ctx: Contexte) -> dict:
                 for mp in PILE_VAR.finditer(ligne):
                     if PAS_PILE.search(mp.group(1)):
                         continue
-                    valeur = mp.group(2).rstrip()
+                    valeur = re.sub(r"\s*!\s*important\s*$", "", mp.group(2).rstrip(), flags=re.IGNORECASE)  # !important conservé
                     if not valeur or "var(" in valeur:
                         continue
                     noms = [x.replace("!important", "").strip().strip("'\"") for x in valeur.split(",")]

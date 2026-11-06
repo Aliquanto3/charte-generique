@@ -153,6 +153,19 @@ def test_dossiers_d_outils_ignores_par_defaut(tmp_path):
     assert {k["fichier"] for k in res["constats"]} == {"app/a.css"}
 
 
+def test_archive_ignore_a_la_racine_seulement(tmp_path):
+    css = "a { color: #00FF00; }\n"
+    d = depot(tmp_path, {"archive/a.css": css, "archives/b.css": css, "templates/archive/c.css": css, "archive.css": css})
+    assert {k["fichier"] for k in audit.auditer(d)["constats"]} == {"templates/archive/c.css", "archive.css"}
+
+
+def test_liens_de_bouton_ou_de_navigation_non_signales(tmp_path):
+    css = ("nav a { text-decoration: none; }\na.btn { text-decoration: none; }\n.menu > a { text-decoration: none; }\n"
+           ".tabs a { text-decoration: none; }\ntable a { text-decoration: none; }\n")
+    avert = audit.auditer(depot(tmp_path, {"style.css": css}))["avertissements"]
+    assert [a for a in avert if "lien" in a] == ["revoir : style.css:5 lien (`table a`) sans soulignement de remplacement (la charte souligne les liens)"]
+
+
 def test_favicon_et_pictogramme_absents_signales(tmp_path):
     res = audit.auditer(depot(tmp_path, {"index.html": "<html></html>\n"}))
     avert = res["avertissements"]
@@ -164,9 +177,9 @@ def test_favicon_et_pictogramme_absents_signales(tmp_path):
 
 
 def test_lien_sans_soulignement_de_remplacement_signale(tmp_path):
-    res = audit.auditer(depot(tmp_path, {"a.css": "nav a {\n  text-decoration: none;\n}\n"}))
+    res = audit.auditer(depot(tmp_path, {"a.css": ".article a {\n  text-decoration: none;\n}\n"}))
     (a,) = res["avertissements"]
-    assert a == "revoir : a.css:1 lien (`nav a`) sans soulignement de remplacement (la charte souligne les liens)"
+    assert a == "revoir : a.css:1 lien (`.article a`) sans soulignement de remplacement (la charte souligne les liens)"
     ok = audit.auditer(depot(tmp_path / "b", {"a.css": "a { text-decoration: none; }\na:hover { text-decoration: underline; }\n"}))
     assert ok["avertissements"] == []
     ok2 = audit.auditer(depot(tmp_path / "c", {"a.css": ".btn { text-decoration: none; }\n"}))

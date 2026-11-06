@@ -38,7 +38,7 @@ Il ne modifie rien.
 uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/audit.py" <dépôt> [--ignorer GLOB] [--markdown | --json] [--strict]
 ```
 
-- `--ignorer` : motif glob à ignorer, répétable. Par défaut : `dist/`, `node_modules/`, `.venv/`, `.claude/`, `_bmad-output/`, `archive/`, `archives/` et `*.min.*`. Entre guillemets : `--ignorer "docs/*"` (sinon le shell développe le motif ; sous Git Bash, `set -f` coupe cette expansion).
+- `--ignorer` : motif glob à ignorer, répétable. Par défaut : `dist/`, `node_modules/`, `.venv/`, `.claude/`, `_bmad-output/`, `archive/` et `archives/` à la racine du dépôt seulement (motif `/archive/`) et `*.min.*`. Entre guillemets : `--ignorer "docs/*"` (sinon le shell développe le motif ; sous Git Bash, `set -f` coupe cette expansion).
 - Sortie : tableau texte, ou `--markdown`, ou `--json`. Un résumé chiffré par classe finit le rapport.
 - `--strict` : code de sortie 1 s'il reste des couleurs ou des polices `hors-charte` ou `v1`. Sans lui, le code est 0.
 
@@ -51,7 +51,7 @@ uv run --no-project python -I "${CLAUDE_PLUGIN_ROOT}/skills/charte/outils/audit.
 | `v1` | Valeur de la charte v1. Le rôle v1 et le rôle v2 cible sont donnés. |
 | `hors-charte` | Tout le reste. Le jeton le plus proche et son ΔE00 sont donnés. |
 
-Des avertissements `revoir` s'ajoutent au rapport (sans effet sur `--strict`) : favicon ou pictogramme absent d'un dépôt qui a des pages HTML (avec la commande `installer.py` à lancer (voir `init`)), et lien dont le soulignement est retiré (`text-decoration: none`) sans soulignement de remplacement.
+Des avertissements `revoir` s'ajoutent au rapport (sans effet sur `--strict`) : favicon ou pictogramme absent d'un dépôt qui a des pages HTML (avec la commande `installer.py` à lancer (voir `init`)), et lien du texte courant dont le soulignement est retiré (`text-decoration: none`) sans soulignement de remplacement (les liens de bouton, de navigation, de menu ou d'onglet ne sont pas signalés).
 
 Les polices sont classées `v1` (l'ancienne police de titres) ou `hors-charte` (famille absente des piles de la charte).
 

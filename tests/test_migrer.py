@@ -387,3 +387,18 @@ def test_message_du_plan_dit_ou_il_est_ecrit(tmp_path, capsys):
     assert f"Plan écrit dans {dehors} (hors du dépôt : rien à commiter)" in capsys.readouterr().out
     lancer(d, "--plan", str(d / "plan.md"))
     assert "(dans le dépôt : ne le commitez pas)" in capsys.readouterr().out
+
+
+def test_font_face_plusieurs_graisses_double_signale(tmp_path):
+    css = ('@font-face {\n  font-family: Fredoka;\n  font-weight: 400;\n  src: url(f/fredoka-400.woff2);\n}\n'
+           '@font-face {\n  font-family: Fredoka;\n  font-weight: 700;\n  src: url(f/fredoka-700.woff2);\n}\n'
+           '@font-face {\n  font-family: Fredoka;\n  font-style: italic;\n  font-weight: 400;\n  src: url(f/fredoka-i.woff2);\n}\n')
+    doubles = [x for x in plan(depot(tmp_path, {"a.css": css})) if x["nouveau"] == "(à supprimer)"]
+    assert [x["ligne"] for x in doubles] == [6] and doubles[0]["statut"] == "revoir"
+    assert "graisse d'origine 700" in doubles[0]["note"] and "ligne 1" in doubles[0]["note"]
+
+
+def test_pile_de_police_garde_important(tmp_path):
+    d = depot(tmp_path, {"a.css": ":root { --police-titres: 'Fredoka', cursive !important; }\n"})
+    lancer(d, "--appliquer")
+    assert lire(d, "a.css") == f":root {{ --police-titres: {J['police']['titres']['pile']} !important; }}\n"

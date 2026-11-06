@@ -63,6 +63,10 @@ def test_seulement_inconnu_ou_vide_refuse(tmp_path, capsys):
     assert "aucun fichier correspondant" in capsys.readouterr().err
     assert installer.main(["--cible", str(tmp_path), "--supports", "web", "--seulement", "css"]) == 0
     assert sorted(p.name for p in (tmp_path / "static" / "charte").iterdir()) == ["charte-base.css", "charte.css"]
+    for vide in [",", "", " , "]:
+        assert installer.main(["--cible", str(tmp_path / "v"), "--supports", "web", "--seulement", vide]) == 1
+        assert "--seulement vide" in capsys.readouterr().err
+    assert not (tmp_path / "v").exists()
 
 
 def test_licences_nommees_selon_la_convention():
